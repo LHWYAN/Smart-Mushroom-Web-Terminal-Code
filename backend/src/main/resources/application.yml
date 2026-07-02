@@ -1,0 +1,56 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-mushroom-backend
+  datasource:
+    url: jdbc:sqlite:${app.sqlite-path:./sensor_data.db}
+    driver-class-name: org.sqlite.JDBC
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-sqlite.sql
+      continue-on-error: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+app:
+  db-type: sqlite
+  data-source: simulate
+  sqlite-path: ./sensor_data.db
+  amqp-db-interval: 30
+  simulate-interval: 30
+  kingbase:
+    host: 127.0.0.1
+    port: 54321
+    database: smart_room
+    username: system
+    password: "123456"
+  amqp:
+    host: 412aa055e1.st1.iotda-app.cn-north-4.myhuaweicloud.com
+    port: 5671
+    queue: roomone-data
+    access-key: sySNddDM
+    access-code: zchIjh859R1EeTMz63rmuXUdtoolVO6m
+    instance-id: 79988786-c17c-4c18-ba29-daf91e189a4d
+    device-id: 6a3a6e0d7f2e6c302f7e2ac9_roomone
+  dify:
+    api-url: http://localhost/v1/chat-messages
+    api-key: app-VO16MbqHBM4dW1lMn3kQ9Qk5

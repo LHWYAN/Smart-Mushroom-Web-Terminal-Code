@@ -1,0 +1,31 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build
+dist/
+frontend/dist/
+backend/target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Database
+*.db
+backend/sensor_data.db
+
+# Environment
+.env
+.env.local
+backend/.env.local
+
+# OS
+.DS_Store
+Thumbs.db
