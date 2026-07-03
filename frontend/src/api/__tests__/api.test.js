@@ -1,10 +1,26 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+vi.hoisted(() => {
+  const storage = {}
+  vi.stubGlobal('localStorage', {
+    getItem: (key) => storage[key] ?? null,
+    setItem: (key, value) => {
+      storage[key] = value
+    },
+    removeItem: (key) => {
+      delete storage[key]
+    },
+    clear: () => {
+      Object.keys(storage).forEach((k) => delete storage[k])
+    },
+  })
+})
 
 // Mock axios 模块
 vi.mock('axios', () => {
   const handlers = { response: [] }
   const instance = {
-    defaults: { baseURL: '/api/v1', timeout: 60000 },
+    defaults: { baseURL: '/api/v1', timeout: 60000, headers: { common: {} } },
     interceptors: {
       response: {
         use: (fulfilled, rejected) => {
@@ -45,6 +61,13 @@ import api, {
   updateCommandStatus,
   deleteCommand,
   aiChat,
+  setAuth,
+  getAuthUser,
+  isLoggedIn,
+  register,
+  login,
+  getProfile,
+  logout,
 } from '../index'
 
 describe('api - HTTP 客户端配置', () => {
@@ -171,5 +194,65 @@ describe('api - 导出函数调用正确的 URL 和方法', () => {
   it('aiChat(question) → POST /ai/chat with JSON body', () => {
     aiChat('蘑菇适宜温度？')
     expect(api.post).toHaveBeenCalledWith('/ai/chat', { question: '蘑菇适宜温度？' })
+  })
+
+  it('register(data) → POST /auth/register with body', () => {
+    const data = { username: 'alice', password: 'pass1234' }
+    register(data)
+    expect(api.post).toHaveBeenCalledWith('/auth/register', data)
+  })
+
+  it('login(data) → POST /auth/login with body', () => {
+    const data = { username: 'alice', password: 'pass1234' }
+    login(data)
+    expect(api.post).toHaveBeenCalledWith('/auth/login', data)
+  })
+
+  it('getProfile() → GET /auth/profile', () => {
+    getProfile()
+    expect(api.get).toHaveBeenCalledWith('/auth/profile')
+  })
+
+  it('logout() → POST /auth/logout', () => {
+    logout()
+    expect(api.post).toHaveBeenCalledWith('/auth/logout')
+  })
+})
+
+describe('api - 认证状态管理', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    delete api.defaults.headers.common['Authorization']
+    setAuth('', null)
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('setAuth(token, user) 写入 localStorage 并设置 Authorization header', () => {
+    const user = { username: 'alice', nickname: 'Alice' }
+    setAuth('test-token', user)
+
+    expect(localStorage.getItem('auth_token')).toBe('test-token')
+    expect(localStorage.getItem('auth_user')).toBe(JSON.stringify(user))
+    expect(api.defaults.headers.common['Authorization']).toBe('Bearer test-token')
+    expect(getAuthUser()).toEqual(user)
+    expect(isLoggedIn()).toBe(true)
+  })
+
+  it('setAuth(null, null) 清除 token 与 header', () => {
+    setAuth('test-token', { username: 'alice' })
+    setAuth('', null)
+
+    expect(localStorage.getItem('auth_token')).toBe('')
+    expect(localStorage.getItem('auth_user')).toBe('')
+    expect(api.defaults.headers.common['Authorization']).toBeUndefined()
+    expect(getAuthUser()).toBeNull()
+    expect(isLoggedIn()).toBe(false)
+  })
+
+  it('isLoggedIn() 无 token 时返回 false', () => {
+    expect(isLoggedIn()).toBe(false)
   })
 })

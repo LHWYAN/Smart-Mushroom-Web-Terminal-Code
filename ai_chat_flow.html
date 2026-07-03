@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI 种植问答调用流程图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  .diagram { width: 1080px; }
+  .title-main {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+
+  /* 流程链 */
+  .chain {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  /* 节点 */
+  .node {
+    border-radius: 10px;
+    border: 2px solid;
+    padding: 14px 16px;
+    text-align: center;
+    min-width: 120px;
+    max-width: 175px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .node .role-tag {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .node .name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .node .desc { font-size: 11px; line-height: 1.5; }
+  .node .tech { font-size: 10px; margin-top: 4px; font-family: "Consolas",monospace; opacity: 0.7; }
+
+  /* 配色 */
+  .n-blue { background: #dbeafe; border-color: #3b82f6; }
+  .n-blue .name { color: #1e40af; } .n-blue .desc { color: #2563eb; }
+  .n-blue .role-tag { background: #3b82f6; }
+
+  .n-orange { background: #ffedd5; border-color: #f97316; }
+  .n-orange .name { color: #9a3412; } .n-orange .desc { color: #c2410c; }
+  .n-orange .role-tag { background: #f97316; }
+
+  .n-green { background: #dcfce7; border-color: #22c55e; }
+  .n-green .name { color: #166534; } .n-green .desc { color: #15803d; }
+  .n-green .role-tag { background: #22c55e; }
+
+  .n-slate { background: #f1f5f9; border-color: #64748b; }
+  .n-slate .name { color: #334155; } .n-slate .desc { color: #475569; }
+  .n-slate .role-tag { background: #64748b; }
+
+  .n-purple { background: #f3e8ff; border-color: #a855f7; }
+  .n-purple .name { color: #6b21a8; } .n-purple .desc { color: #7e22ce; }
+  .n-purple .role-tag { background: #a855f7; }
+
+  .n-amber { background: #fef3c7; border-color: #f59e0b; }
+  .n-amber .name { color: #92400e; } .n-amber .desc { color: #b45309; }
+  .n-amber .role-tag { background: #f59e0b; }
+
+  .n-red { background: #fee2e2; border-color: #ef4444; }
+  .n-red .name { color: #991b1b; } .n-red .desc { color: #b91c1c; }
+  .n-red .role-tag { background: #ef4444; }
+
+  /* 箭头 */
+  .arr {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 65px;
+    padding-top: 20px;
+  }
+  .arr .label {
+    font-size: 10px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-align: center;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .arr .line {
+    width: 100%;
+    height: 2px;
+    position: relative;
+  }
+  .arr .line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-style: solid;
+    border-width: 5px 0 5px 8px;
+    border-color: transparent transparent transparent currentColor;
+  }
+  .arr-blue { color: #3b82f6; } .arr-blue .line { background: #3b82f6; }
+  .arr-orange { color: #f97316; } .arr-orange .line { background: #f97316; }
+  .arr-green { color: #22c55e; } .arr-green .line { background: #22c55e; }
+  .arr-slate { color: #64748b; } .arr-slate .line { background: #64748b; }
+  .arr-purple { color: #a855f7; } .arr-purple .line { background: #a855f7; }
+  .arr-amber { color: #f59e0b; } .arr-amber .line { background: #f59e0b; }
+  .arr-red { color: #ef4444; } .arr-red .line { background: #ef4444; }
+
+  /* 回程箭头（虚线） */
+  .arr .line.dashed {
+    background: transparent;
+    border-top: 2px dashed currentColor;
+    height: 0;
+  }
+  .arr .line.dashed::after {
+    border-color: transparent transparent transparent currentColor;
+  }
+
+  /* 清洗细节展开 */
+  .sanitize-box {
+    border: 2px solid #f59e0b;
+    border-radius: 10px;
+    background: #fffbeb;
+    padding: 16px 18px;
+    margin: 0 auto 20px auto;
+    max-width: 720px;
+  }
+  .sanitize-box .sb-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .sanitize-box .sb-grid {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  .sanitize-box .sb-item {
+    flex: 1;
+    max-width: 220px;
+    background: #fff;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+  }
+  .sanitize-box .sb-item .tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 4px;
+  }
+  .sanitize-box .sb-item .pattern {
+    font-size: 10px;
+    font-family: "Consolas",monospace;
+    color: #b45309;
+    background: #fef3c7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  .sanitize-box .sb-item .action {
+    font-size: 10px;
+    color: #64748b;
+  }
+
+  /* 预设问题区域 */
+  .preset-box {
+    border: 2px solid #a855f7;
+    border-radius: 10px;
+    background: #faf5ff;
+    padding: 16px 18px;
+    margin: 0 auto 20px auto;
+    max-width: 720px;
+  }
+  .preset-box .pb-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #6b21a8;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .preset-box .pb-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .preset-box .pb-btn {
+    background: #f3e8ff;
+    border: 1px solid #c4b5fd;
+    border-radius: 16px;
+    padding: 5px 14px;
+    font-size: 11px;
+    color: #6b21a8;
+    font-weight: 500;
+  }
+
+  /* 请求/响应示例 */
+  .code-block {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 0 auto 16px auto;
+    max-width: 720px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .code-block .ck { color: #94a3b8; }
+  .code-block .cv { color: #4ade80; }
+  .code-block .cs { color: #fbbf24; }
+  .code-block .ce { color: #f87171; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 16px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 20px 0 10px 0;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title-main">AI 种植问答调用流程图</div>
+  <div class="subtitle">前端 /ai 页面 → AiController → AiService → Dify LLM → AiAnswerSanitizer 清洗 → 返回前端</div>
+
+  <!-- ========== 主调用链 ========== -->
+  <div class="section-label">主调用链</div>
+
+  <div class="chain">
+    <!-- 1. 前端 -->
+    <div class="node n-blue">
+      <div class="role-tag">客户端</div>
+      <div class="name">Vue /ai 页面</div>
+      <div class="desc">用户输入种植问题<br>或点击预设问题按钮</div>
+      <div class="tech">POST /api/v1/ai/chat</div>
+    </div>
+
+    <div class="arr arr-blue">
+      <div class="label">HTTP POST<br>JSON body</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- 2. AiController -->
+    <div class="node n-orange">
+      <div class="role-tag">Controller</div>
+      <div class="name">AiController</div>
+      <div class="desc">@NotBlank 校验<br>question 非空验证</div>
+      <div class="tech">@PostMapping("/ai/chat")</div>
+    </div>
+
+    <div class="arr arr-orange">
+      <div class="label">调用<br>aiService.chat()</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- 3. AiService -->
+    <div class="node n-green">
+      <div class="role-tag">Service</div>
+      <div class="name">AiService</div>
+      <div class="desc">构造请求体<br>设置 Bearer API-Key</div>
+      <div class="tech">RestTemplate.postForObject()</div>
+    </div>
+
+    <div class="arr arr-green">
+      <div class="label">HTTP POST<br>chat-messages</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- 4. Dify -->
+    <div class="node n-slate">
+      <div class="role-tag">外部平台</div>
+      <div class="name">Dify 大模型平台</div>
+      <div class="desc">DeepSeek-R1 推理<br>生成回答 + 思考链</div>
+      <div class="tech">/v1/chat-messages</div>
+    </div>
+  </div>
+
+  <!-- 回程链 -->
+  <div class="section-label">响应回程链（清洗 → 返回）</div>
+
+  <div class="chain">
+    <!-- 4. Dify 返回 -->
+    <div class="node n-slate">
+      <div class="role-tag">响应</div>
+      <div class="name">Dify 原始响应</div>
+      <div class="desc">answer 字段含<br>思考链标签 + 正文</div>
+      <div class="tech">{ "answer": "DMIN..." }</div>
+    </div>
+
+    <div class="arr arr-amber">
+      <div class="label">返回<br>Map&lt;String,Object&gt;</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- 5. AiAnswerSanitizer -->
+    <div class="node n-amber">
+      <div class="role-tag">清洗器</div>
+      <div class="name">AiAnswerSanitizer</div>
+      <div class="desc">剥离思考链标签<br>压缩换行 + trim</div>
+      <div class="tech">sanitize(answer)</div>
+    </div>
+
+    <div class="arr arr-purple">
+      <div class="label">清洗后<br>纯正文</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- 6. AiService 封装 -->
+    <div class="node n-green">
+      <div class="role-tag">Service</div>
+      <div class="name">AiService</div>
+      <div class="desc">封装为 Map<br>{ answer: "纯正文" }</div>
+      <div class="tech">return Map.of("answer",...)</div>
+    </div>
+
+    <div class="arr arr-blue">
+      <div class="label">ApiResponse.ok()<br>code=0</div>
+      <div class="line"></div>
+    </div>
+
+    <!-- 7. 前端展示 -->
+    <div class="node n-purple">
+      <div class="role-tag">客户端</div>
+      <div class="name">前端渲染</div>
+      <div class="desc">展示清洗后的<br>AI 回答内容</div>
+      <div class="tech">res.data.answer</div>
+    </div>
+  </div>
+
+  <!-- ========== 清洗细节 ========== -->
+  <div class="section-label">AiAnswerSanitizer 思考链清洗细节</div>
+
+  <div class="sanitize-box">
+    <div class="sb-title">清洗 DeepSeek-R1 等推理模型的思考链标签</div>
+    <div class="sb-grid">
+      <div class="sb-item">
+        <div class="tag">标签 1</div>
+        <div class="pattern">DMIN...DMIN</div>
+        <div class="action">正则匹配剥离<br>含 orphan 标签处理</div>
+      </div>
+      <div class="sb-item">
+        <div class="tag">标签 2</div>
+        <div class="pattern">&lt;thinking&gt;...&lt;/thinking&gt;</div>
+        <div class="action">大小写不敏感匹配<br>多行内容剥离</div>
+      </div>
+      <div class="sb-item">
+        <div class="tag">标签 3</div>
+        <div class="pattern">&lt;redacted_thinking&gt;...&lt;/redacted_thinking&gt;</div>
+        <div class="action">隐藏推理链剥离<br>多余换行压缩为双换行</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 预设问题 ========== -->
+  <div class="section-label">预设问题快捷按钮</div>
+
+  <div class="preset-box">
+    <div class="pb-title">/ai 页面提供的预设问题（一键发送，快速演示）</div>
+    <div class="pb-grid">
+      <div class="pb-btn">系统架构是什么？</div>
+      <div class="pb-btn">蘑菇最佳生长温度是多少？</div>
+      <div class="pb-btn">温湿度阈值是多少？</div>
+      <div class="pb-btn">如何防治绿霉？</div>
+      <div class="pb-btn">数据库设计了哪些表？</div>
+      <div class="pb-btn">支持哪些控制命令？</div>
+      <div class="pb-btn">CO2 浓度超标怎么办？</div>
+      <div class="pb-btn">光照强度如何控制？</div>
+    </div>
+  </div>
+
+  <!-- ========== 请求/响应示例 ========== -->
+  <div class="section-label">请求与响应示例</div>
+
+  <div class="code-block">
+<span class="ck">// ── 请求 ──</span>
+POST /api/v1/ai/chat
+Content-Type: application/json
+
+{ <span class="cv">"question"</span>: <span class="cs">"蘑菇最佳生长温度是多少？"</span> }
+
+<span class="ck">// ── Dify 原始响应（含思考链） ──</span>
+{ <span class="cv">"answer"</span>: <span class="cs">"DMIN用户问的是温度，需要从种植知识库中检索...DMIN蘑菇菌丝生长适宜温度为18-25℃，子实体发育最佳温度为16-22℃。"</span> }
+
+<span class="ck">// ── AiAnswerSanitizer 清洗后 ──</span>
+{ <span class="cv">"answer"</span>: <span class="cs">"蘑菇菌丝生长适宜温度为18-25℃，子实体发育最佳温度为16-22℃。"</span> }
+
+<span class="ck">// ── 前端最终收到 ──</span>
+{ <span class="cv">"code"</span>: <span class="ce">0</span>, <span class="cv">"message"</span>: <span class="cs">"success"</span>, <span class="cv">"data"</span>: { <span class="cv">"answer"</span>: <span class="cs">"蘑菇菌丝生长适宜温度为18-25℃..."</span> } }
+  </div>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="border-color:#3b82f6;background:#dbeafe;"></div>前端</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f97316;background:#ffedd5;"></div>Controller</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#22c55e;background:#dcfce7;"></div>Service</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#64748b;background:#f1f5f9;"></div>Dify 平台</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f59e0b;background:#fef3c7;"></div>清洗器</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#a855f7;background:#f3e8ff;"></div>前端渲染</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>用户认证流程图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  .diagram { width: 1100px; }
+  .title-main {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 24px;
+  }
+
+  /* 三列布局 */
+  .columns {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .col {
+    flex: 1;
+    min-width: 0;
+  }
+  .col-title {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 0;
+    border-radius: 8px 8px 0 0;
+    color: #fff;
+    margin-bottom: 0;
+  }
+  .col-body {
+    border: 2px solid;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 16px 12px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* 各列配色 */
+  .col-register .col-title { background: #22c55e; }
+  .col-register .col-body { border-color: #22c55e; background: #f0fdf4; }
+  .col-login .col-title { background: #3b82f6; }
+  .col-login .col-body { border-color: #3b82f6; background: #eff6ff; }
+  .col-guard .col-title { background: #f97316; }
+  .col-guard .col-body { border-color: #f97316; background: #fff7ed; }
+
+  /* 流程节点 */
+  .step {
+    width: 100%;
+    max-width: 280px;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    border: 2px solid;
+    position: relative;
+  }
+  .step .desc {
+    font-size: 10px;
+    font-weight: 400;
+    margin-top: 3px;
+    opacity: 0.85;
+  }
+
+  /* 节点类型 */
+  .start-end {
+    border-radius: 20px;
+    padding: 8px 16px;
+  }
+  .decision {
+    border-radius: 4px;
+    transform: rotate(0deg);
+    border-width: 2px;
+  }
+  .process { border-radius: 6px; }
+  .io {
+    border-radius: 6px;
+    border-left: 6px solid;
+  }
+  .db-op {
+    border-style: dashed;
+    border-radius: 6px;
+  }
+
+  /* 节点配色 - 注册列 */
+  .s-green { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  .s-green-dark { background: #22c55e; border-color: #16a34a; color: #fff; }
+
+  /* 节点配色 - 登录列 */
+  .s-blue { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+  .s-blue-dark { background: #3b82f6; border-color: #2563eb; color: #fff; }
+  .s-red { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .s-amber { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+
+  /* 节点配色 - 守卫列 */
+  .s-orange { background: #ffedd5; border-color: #f97316; color: #9a3412; }
+  .s-orange-dark { background: #f97316; border-color: #ea580c; color: #fff; }
+  .s-slate { background: #f1f5f9; border-color: #64748b; color: #334155; }
+
+  /* 箭头连接 */
+  .arrow-down {
+    width: 2px;
+    height: 20px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .arrow-down::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-style: solid;
+    border-width: 6px 4px 0 4px;
+    border-color: transparent transparent transparent transparent;
+  }
+  .arrow-down.green::after { border-top-color: #22c55e; }
+  .arrow-down.green { background: #22c55e; }
+  .arrow-down.blue::after { border-top-color: #3b82f6; }
+  .arrow-down.blue { background: #3b82f6; }
+  .arrow-down.red::after { border-top-color: #ef4444; }
+  .arrow-down.red { background: #ef4444; }
+  .arrow-down.amber::after { border-top-color: #f59e0b; }
+  .arrow-down.amber { background: #f59e0b; }
+  .arrow-down.orange::after { border-top-color: #f97316; }
+  .arrow-down.orange { background: #f97316; }
+  .arrow-down.slate::after { border-top-color: #64748b; }
+  .arrow-down.slate { background: #64748b; }
+
+  /* 分支标签 */
+  .branch-label {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 0 auto 2px auto;
+    text-align: center;
+    width: fit-content;
+  }
+  .bl-yes { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
+  .bl-no { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+
+  /* 分支容器 */
+  .branch-split {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+  .branch-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 130px;
+  }
+
+  /* KingbaseES 数据库标注 */
+  .kingbase-box {
+    border: 2px dashed #dc2626;
+    border-radius: 8px;
+    background: #fef2f2;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+    max-width: 280px;
+    margin-top: 4px;
+  }
+  .kingbase-box .kb-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #991b1b;
+    margin-bottom: 4px;
+  }
+  .kingbase-box .kb-sql {
+    font-size: 10px;
+    color: #b91c1c;
+    font-family: "Consolas", "Courier New", monospace;
+    line-height: 1.5;
+  }
+
+  /* Token 机制说明框 */
+  .token-box {
+    border: 2px solid #a855f7;
+    border-radius: 8px;
+    background: #faf5ff;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: #6b21a8;
+    line-height: 1.6;
+    width: 100%;
+    max-width: 280px;
+    margin-top: 4px;
+  }
+  .token-box .tb-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  /* 底部初始化说明 */
+  .init-section {
+    margin-top: 20px;
+    border: 2px solid #64748b;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 14px 18px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .init-section .init-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+    padding-right: 16px;
+    border-right: 2px solid #cbd5e1;
+  }
+  .init-section .init-content {
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.7;
+  }
+  .init-section code {
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #1e293b;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 16px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title-main">用户认证流程图</div>
+  <div class="subtitle">注册 · 登录 · Token 校验 · 路由守卫 · 退出登录 — 基于 KingbaseES + JWT</div>
+
+  <div class="columns">
+
+    <!-- ========== 注册流程 ========== -->
+    <div class="col col-register">
+      <div class="col-title">注册流程</div>
+      <div class="col-body">
+
+        <div class="step start-end s-green-dark">用户填写注册信息</div>
+        <div class="arrow-down green"></div>
+
+        <div class="step process s-green">
+          前端 POST /auth/register
+          <div class="desc">username + password + nickname</div>
+        </div>
+        <div class="arrow-down green"></div>
+
+        <div class="step decision s-green">
+          AuthService.register()
+          <div class="desc">查询用户名是否已存在</div>
+        </div>
+        <div class="arrow-down green"></div>
+
+        <div class="branch-label bl-no">用户名已存在</div>
+        <div class="branch-split">
+          <div class="branch-side">
+            <div class="step io s-red" style="max-width:110px;">
+              返回失败
+              <div class="desc">用户名已被占用</div>
+            </div>
+          </div>
+          <div class="branch-side">
+            <div class="branch-label bl-yes" style="margin:0 0 4px 0;">可用</div>
+            <div class="arrow-down green"></div>
+            <div class="step process s-green" style="max-width:110px;">
+              BCrypt 加盐哈希
+              <div class="desc">passwordEncoder.encode()</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-down green"></div>
+
+        <div class="step db-op s-green">
+          INSERT INTO users
+          <div class="desc">写入 username + hash + nickname</div>
+        </div>
+        <div class="arrow-down green"></div>
+
+        <div class="kingbase-box">
+          <div class="kb-title">KingbaseES — users 表</div>
+          <div class="kb-sql">INSERT INTO users<br>(username, password, nickname, role, status)<br>VALUES (?, ?, ?, 'user', 'active')</div>
+        </div>
+        <div class="arrow-down green"></div>
+
+        <div class="step start-end s-green-dark">注册成功，返回用户信息</div>
+
+      </div>
+    </div>
+
+    <!-- ========== 登录流程 ========== -->
+    <div class="col col-login">
+      <div class="col-title">登录流程</div>
+      <div class="col-body">
+
+        <div class="step start-end s-blue-dark">用户输入用户名密码</div>
+        <div class="arrow-down blue"></div>
+
+        <div class="step process s-blue">
+          前端 POST /auth/login
+          <div class="desc">username + password</div>
+        </div>
+        <div class="arrow-down blue"></div>
+
+        <div class="step decision s-blue">
+          AuthService.login()
+          <div class="desc">getUserByUsername() 查询用户</div>
+        </div>
+        <div class="arrow-down blue"></div>
+
+        <div class="branch-label bl-no">用户不存在</div>
+        <div class="branch-split">
+          <div class="branch-side">
+            <div class="step io s-red" style="max-width:100px;">
+              登录失败
+              <div class="desc">用户不存在</div>
+            </div>
+          </div>
+          <div class="branch-side">
+            <div class="branch-label bl-yes" style="margin:0 0 4px 0;">存在</div>
+            <div class="arrow-down blue"></div>
+            <div class="step decision s-amber" style="max-width:110px;">
+              账户状态?
+              <div class="desc">status == active</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-down amber"></div>
+
+        <div class="branch-label bl-no">禁用</div>
+        <div class="branch-split">
+          <div class="branch-side">
+            <div class="step io s-red" style="max-width:100px;">
+              登录失败
+              <div class="desc">账户已禁用</div>
+            </div>
+          </div>
+          <div class="branch-side">
+            <div class="branch-label bl-yes" style="margin:0 0 4px 0;">活跃</div>
+            <div class="arrow-down blue"></div>
+            <div class="step decision s-amber" style="max-width:110px;">
+              BCrypt.matches()?
+              <div class="desc">明文 vs hash</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-down amber"></div>
+
+        <div class="branch-label bl-no">不匹配</div>
+        <div class="branch-split">
+          <div class="branch-side">
+            <div class="step io s-red" style="max-width:100px;">
+              登录失败
+              <div class="desc">密码错误</div>
+            </div>
+          </div>
+          <div class="branch-side">
+            <div class="branch-label bl-yes" style="margin:0 0 4px 0;">匹配</div>
+            <div class="arrow-down blue"></div>
+            <div class="step process s-blue" style="max-width:120px;">
+              JwtUtil.generateToken()
+              <div class="desc">UUID Token 签发</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-down blue"></div>
+
+        <div class="token-box">
+          <div class="tb-title">JWT Token 双向映射机制</div>
+          ① token → username 映射（校验用）<br>
+          ② username → token 映射（单设备登录）<br>
+          ③ 重复登录踢掉旧 Token<br>
+          ④ Token 内存存储 + 过期时间校验
+        </div>
+        <div class="arrow-down blue"></div>
+
+        <div class="step start-end s-blue-dark">
+          返回 Token + 用户信息
+          <div class="desc" style="color:#bfdbfe;">前端存入 localStorage</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========== 路由守卫 + Token 校验 + 退出 ========== -->
+    <div class="col col-guard">
+      <div class="col-title">Token 校验与路由守卫</div>
+      <div class="col-body">
+
+        <div class="step start-end s-orange-dark">用户访问业务页面</div>
+        <div class="arrow-down orange"></div>
+
+        <div class="step decision s-orange">
+          Vue Router beforeEach
+          <div class="desc">导航守卫拦截</div>
+        </div>
+        <div class="arrow-down orange"></div>
+
+        <div class="step decision s-amber">
+          localStorage 有 Token?
+          <div class="desc">检查登录态</div>
+        </div>
+        <div class="arrow-down amber"></div>
+
+        <div class="branch-label bl-no">无 Token</div>
+        <div class="branch-split">
+          <div class="branch-side">
+            <div class="step io s-red" style="max-width:110px;">
+              跳转 /login
+              <div class="desc">未登录拦截</div>
+            </div>
+          </div>
+          <div class="branch-side">
+            <div class="branch-label bl-yes" style="margin:0 0 4px 0;">有 Token</div>
+            <div class="arrow-down orange"></div>
+            <div class="step process s-orange" style="max-width:120px;">
+              Axios 请求拦截器注入
+              <div class="desc">Authorization: Bearer {token}</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-down orange"></div>
+
+        <div class="step process s-orange">
+          发送 REST 请求
+          <div class="desc">Controller 接收</div>
+        </div>
+        <div class="arrow-down orange"></div>
+
+        <div class="step decision s-amber">
+          JwtUtil.validateToken()
+          <div class="desc">校验 Token 有效性与过期时间</div>
+        </div>
+        <div class="arrow-down amber"></div>
+
+        <div class="branch-label bl-no">无效/过期</div>
+        <div class="branch-split">
+          <div class="branch-side">
+            <div class="step io s-red" style="max-width:100px;">
+              401 Unauthorized
+              <div class="desc">前端跳转 /login</div>
+            </div>
+          </div>
+          <div class="branch-side">
+            <div class="branch-label bl-yes" style="margin:0 0 4px 0;">有效</div>
+            <div class="arrow-down orange"></div>
+            <div class="step process s-orange" style="max-width:110px;">
+              放行请求
+              <div class="desc">执行业务逻辑</div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-down slate"></div>
+
+        <!-- 退出登录 -->
+        <div class="step start-end s-slate" style="background:#64748b;border-color:#475569;color:#fff;">
+          用户点击退出登录
+        </div>
+        <div class="arrow-down slate"></div>
+
+        <div class="step process s-slate">
+          POST /auth/logout
+          <div class="desc">携带 Authorization 头</div>
+        </div>
+        <div class="arrow-down slate"></div>
+
+        <div class="step process s-slate">
+          JwtUtil.removeToken()
+          <div class="desc">移除服务端 Token 记录</div>
+        </div>
+        <div class="arrow-down slate"></div>
+
+        <div class="step io s-slate">
+          前端清除 localStorage
+          <div class="desc">移除 Token + 用户信息</div>
+        </div>
+        <div class="arrow-down slate"></div>
+
+        <div class="step start-end s-slate" style="background:#64748b;border-color:#475569;color:#fff;">
+          跳转 /login
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 底部：系统启动初始化 -->
+  <div class="init-section">
+    <div class="init-label">系统启动初始化</div>
+    <div class="init-content">
+      <code>AuthService.initTable()</code> 通过 <code>CREATE TABLE IF NOT EXISTS users</code> 在金仓数据库自动建表<br>
+      表结构：id(SERIAL PK) · username(UNIQUE) · password(BCrypt hash) · nickname · role · status · create_time · update_time<br>
+      自动初始化默认管理员账户：<code>admin / admin123</code>（role=admin, status=active），密码经 BCrypt 加密存储
+    </div>
+  </div>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="border-color:#22c55e;background:#dcfce7;"></div>注册流程</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#3b82f6;background:#dbeafe;"></div>登录流程</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f97316;background:#ffedd5;"></div>路由守卫/Token校验</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#ef4444;background:#fee2e2;"></div>失败/拒绝</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f59e0b;background:#fef3c7;"></div>判断分支</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#64748b;background:#f1f5f9;"></div>退出登录</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#dc2626;background:#fef2f2;border-style:dashed;"></div>KingbaseES 操作</div>
+  </div>
+</div>
+</body>
+</html>

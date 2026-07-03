@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Web CRUD 操作流程图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  .diagram { width: 1100px; }
+  .title-main {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+
+  /* 泳道 */
+  .swimlane {
+    display: flex;
+    margin-bottom: 0;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+  }
+  .lane-header {
+    width: 110px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 6px;
+    border-right: 2px solid #cbd5e1;
+  }
+  .lane-body {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    min-height: 60px;
+  }
+  .lane-frontend .lane-header { background: #3b82f6; color: #fff; }
+  .lane-frontend .lane-body { background: #eff6ff; }
+  .lane-backend .lane-header { background: #f97316; color: #fff; }
+  .lane-backend .lane-body { background: #fff7ed; }
+  .lane-db .lane-header { background: #ef4444; color: #fff; }
+  .lane-db .lane-body { background: #fef2f2; }
+
+  /* 节点 */
+  .node {
+    border-radius: 8px;
+    border: 2px solid;
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: 200px;
+    position: relative;
+  }
+  .node .desc { font-size: 10px; font-weight: 400; margin-top: 3px; opacity: 0.8; }
+
+  .n-start { border-radius: 20px; padding: 8px 20px; }
+  .n-decision { border-radius: 4px; }
+  .n-db { border-style: dashed; }
+
+  /* 前端节点配色 */
+  .nf { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+  .nf-dark { background: #3b82f6; border-color: #2563eb; color: #fff; }
+  /* 后端节点配色 */
+  .nb { background: #ffedd5; border-color: #f97316; color: #9a3412; }
+  .nb-dark { background: #f97316; border-color: #ea580c; color: #fff; }
+  /* 数据库节点配色 */
+  .nd { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .nd-dark { background: #ef4444; border-color: #dc2626; color: #fff; }
+  /* 通用 */
+  .n-amber { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+  .n-green { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  .n-red { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .n-slate { background: #f1f5f9; border-color: #64748b; color: #334155; }
+
+  /* 箭头 */
+  .arr-down {
+    width: 2px;
+    height: 18px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .arr-down::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-style: solid;
+    border-width: 6px 4px 0 4px;
+  }
+  .arr-down.blue::after { border-top-color: #3b82f6; } .arr-down.blue { background: #3b82f6; }
+  .arr-down.orange::after { border-top-color: #f97316; } .arr-down.orange { background: #f97316; }
+  .arr-down.red::after { border-top-color: #ef4444; } .arr-down.red { background: #ef4444; }
+  .arr-down.amber::after { border-top-color: #f59e0b; } .arr-down.amber { background: #f59e0b; }
+  .arr-down.green::after { border-top-color: #22c55e; } .arr-down.green { background: #22c55e; }
+  .arr-down.slate::after { border-top-color: #64748b; } .arr-down.slate { background: #64748b; }
+
+  .arr-label {
+    font-size: 10px;
+    font-weight: 600;
+    margin: 0 auto 2px auto;
+    text-align: center;
+  }
+
+  /* 分支 */
+  .branch {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    justify-content: center;
+  }
+  .branch-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 200px;
+  }
+  .bl { font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 4px; margin-bottom: 4px; }
+  .bl-yes { background: #dcfce7; color: #166534; border: 1px solid #22c55e; }
+  .bl-no { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+
+  /* 跨泳道连接 */
+  .cross-lane {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    margin: 6px 0;
+  }
+  .cross-arrow {
+    flex: 1;
+    height: 2px;
+    position: relative;
+  }
+  .cross-arrow::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-style: solid;
+    border-width: 5px 0 5px 8px;
+    border-color: transparent transparent transparent currentColor;
+  }
+  .cross-arrow.dashed {
+    background: transparent;
+    border-top: 2px dashed currentColor;
+    height: 0;
+  }
+  .cross-arrow.dashed::after {
+    border-color: transparent transparent transparent currentColor;
+  }
+  .cross-arrow.left-arrow::after {
+    right: auto;
+    left: -1px;
+    border-width: 5px 8px 5px 0;
+    border-color: transparent currentColor transparent transparent;
+  }
+  .cross-label {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+
+  /* CRUD 四列 */
+  .crud-grid {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+  }
+  .crud-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 180px;
+  }
+  .crud-header {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 6px;
+    color: #fff;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .ch-create { background: #22c55e; }
+  .ch-read { background: #3b82f6; }
+  .ch-update { background: #f59e0b; }
+  .ch-delete { background: #ef4444; }
+
+  /* 阶段标签 */
+  .phase-bar {
+    background: #f1f5f9;
+    border-left: 4px solid;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .phase-auth { border-color: #ef4444; color: #991b1b; }
+  .phase-crud { border-color: #3b82f6; color: #1e40af; }
+
+  /* 底部表格 */
+  .crud-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 11px;
+  }
+  .crud-table th, .crud-table td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .crud-table th {
+    background: #1e293b;
+    color: #fff;
+    font-weight: 700;
+  }
+  .crud-table td:first-child { font-weight: 600; }
+  .crud-table .c { background: #dcfce7; color: #166534; }
+  .crud-table .r { background: #dbeafe; color: #1e40af; }
+  .crud-table .u { background: #fef3c7; color: #92400e; }
+  .crud-table .d { background: #fee2e2; color: #991b1b; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 16px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title-main">Web CRUD 操作流程图</div>
+  <div class="subtitle">登录鉴权前置 → 前端发起 → 后端处理 → 数据库操作 → 响应返回</div>
+
+  <!-- ========== 阶段 1：登录前置 ========== -->
+  <div class="phase-bar phase-auth">阶段 1：登录鉴权前置环节（所有 CRUD 操作的必要前提）</div>
+
+  <div class="swimlane">
+    <div class="lane-header lane-frontend">前端</div>
+    <div class="lane-body lane-frontend">
+      <div class="node n-start nf-dark">用户访问系统</div>
+      <div class="arr-down blue"></div>
+      <div class="node n-decision nf">
+        路由守卫 beforeEach
+        <div class="desc">检查 localStorage Token</div>
+      </div>
+      <div class="arr-down amber"></div>
+      <div class="node n-decision n-amber">
+        有有效 Token?
+      </div>
+      <div class="arr-down amber"></div>
+      <div class="branch">
+        <div class="branch-side">
+          <div class="bl bl-no">无 Token / 过期</div>
+          <div class="arr-down red"></div>
+          <div class="node n-red" style="max-width:140px;">
+            跳转 /login
+            <div class="desc">登录页面</div>
+          </div>
+          <div class="arr-down red"></div>
+          <div class="node n-red" style="max-width:140px;">
+            POST /auth/login
+            <div class="desc">用户名 + 密码</div>
+          </div>
+          <div class="arr-down green"></div>
+          <div class="node n-green n-decision" style="max-width:140px;">
+            KingbaseES 验证
+            <div class="desc">BCrypt + JWT 签发</div>
+          </div>
+          <div class="arr-down green"></div>
+          <div class="node n-start n-green" style="max-width:140px;background:#22c55e;border-color:#16a34a;color:#fff;">
+            获取 Token
+            <div class="desc" style="color:#dcfce7;">存入 localStorage</div>
+          </div>
+        </div>
+        <div class="branch-side">
+          <div class="bl bl-yes">有有效 Token</div>
+          <div class="arr-down blue"></div>
+          <div class="node nf" style="max-width:140px;">
+            Axios 拦截器注入
+            <div class="desc">Authorization: Bearer {token}</div>
+          </div>
+          <div class="arr-down blue"></div>
+          <div class="node n-start nf-dark" style="max-width:140px;">
+            进入业务页面
+            <div class="desc" style="color:#dbeafe;">设备/数据/命令管理</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 跨泳道过渡 -->
+  <div style="text-align:center; padding: 10px 0; font-size: 12px; color: #64748b; font-weight: 600;">
+    ↓ ↓ ↓ 登录成功后，携带 Token 发起 CRUD 操作 ↓ ↓ ↓
+  </div>
+
+  <!-- ========== 阶段 2：CRUD 操作 ========== -->
+  <div class="phase-bar phase-crud">阶段 2：CRUD 操作流程（前端 → 后端 → 数据库 → 响应）</div>
+
+  <!-- 前端泳道 -->
+  <div class="swimlane">
+    <div class="lane-header lane-frontend">前端</div>
+    <div class="lane-body lane-frontend">
+      <div class="crud-grid">
+        <div class="crud-col">
+          <div class="crud-header ch-create">Create · 新增</div>
+          <div class="node nf" style="max-width:160px;">
+            用户填写表单
+            <div class="desc">设备注册/数据插入/命令创建</div>
+          </div>
+          <div class="arr-down blue"></div>
+          <div class="node nf-dark" style="max-width:160px;">
+            POST 请求
+            <div class="desc">Axios.post(url, params)</div>
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="crud-header ch-read">Read · 查询</div>
+          <div class="node nf" style="max-width:160px;">
+            用户查看列表
+            <div class="desc">设备列表/历史数据/命令列表</div>
+          </div>
+          <div class="arr-down blue"></div>
+          <div class="node nf-dark" style="max-width:160px;">
+            GET 请求
+            <div class="desc">Axios.get(url, {params})</div>
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="crud-header ch-update">Update · 修改</div>
+          <div class="node nf" style="max-width:160px;">
+            用户编辑数据
+            <div class="desc">设备信息/传感器值/命令状态</div>
+          </div>
+          <div class="arr-down blue"></div>
+          <div class="node nf-dark" style="max-width:160px;">
+            PUT 请求
+            <div class="desc">Axios.put(url, params)</div>
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="crud-header ch-delete">Delete · 删除</div>
+          <div class="node nf" style="max-width:160px;">
+            用户确认删除
+            <div class="desc">设备删除/数据清理/命令删除</div>
+          </div>
+          <div class="arr-down blue"></div>
+          <div class="node nf-dark" style="max-width:160px;">
+            DELETE 请求
+            <div class="desc">Axios.delete(url)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 跨泳道箭头 -->
+  <div class="swimlane" style="border-top:none; border-radius:0;">
+    <div class="lane-header lane-frontend" style="background:#1e293b;">→</div>
+    <div class="lane-body lane-frontend" style="background:#f8fafc; min-height:30px; padding:6px;">
+      <div class="cross-lane">
+        <div style="flex:1;"></div>
+        <div class="cross-label" style="color:#3b82f6;">携带 Authorization: Bearer {token} →</div>
+        <div class="cross-arrow" style="color:#3b82f6; max-width:60px;"></div>
+        <div style="flex:1;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 后端泳道 -->
+  <div class="swimlane" style="border-top:none; border-radius:0;">
+    <div class="lane-header lane-backend">后端</div>
+    <div class="lane-body lane-backend">
+      <div class="crud-grid">
+        <div class="crud-col">
+          <div class="node nb" style="max-width:160px;">
+            Controller 接收
+            <div class="desc">@PostMapping</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb" style="max-width:160px;">
+            Service 处理
+            <div class="desc">参数校验 + 业务逻辑</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb-dark" style="max-width:160px;">
+            Mapper.insert()
+            <div class="desc">MyBatis-Plus</div>
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="node nb" style="max-width:160px;">
+            Controller 接收
+            <div class="desc">@GetMapping</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb" style="max-width:160px;">
+            Service 处理
+            <div class="desc">查询条件构建</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb-dark" style="max-width:160px;">
+            Mapper.selectList()
+            <div class="desc">LambdaQueryWrapper</div>
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="node nb" style="max-width:160px;">
+            Controller 接收
+            <div class="desc">@PutMapping</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb" style="max-width:160px;">
+            Service 处理
+            <div class="desc">字段过滤 + 更新</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb-dark" style="max-width:160px;">
+            Mapper.update()
+            <div class="desc">LambdaUpdateWrapper</div>
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="node nb" style="max-width:160px;">
+            Controller 接收
+            <div class="desc">@DeleteMapping</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb" style="max-width:160px;">
+            Service 处理
+            <div class="desc">级联删除检查</div>
+          </div>
+          <div class="arr-down orange"></div>
+          <div class="node nb-dark" style="max-width:160px;">
+            Mapper.delete()
+            <div class="desc">deleteById / delete</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 跨泳道箭头 -->
+  <div class="swimlane" style="border-top:none; border-radius:0;">
+    <div class="lane-header lane-backend" style="background:#1e293b;">→</div>
+    <div class="lane-body lane-backend" style="background:#f8fafc; min-height:30px; padding:6px;">
+      <div class="cross-lane">
+        <div style="flex:1;"></div>
+        <div class="cross-label" style="color:#f97316;">SQL 执行 →</div>
+        <div class="cross-arrow" style="color:#f97316; max-width:60px;"></div>
+        <div style="flex:1;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据库泳道 -->
+  <div class="swimlane" style="border-top:none; border-radius:0 0 10px 10px;">
+    <div class="lane-header lane-db">数据库</div>
+    <div class="lane-body lane-db">
+      <div class="crud-grid">
+        <div class="crud-col">
+          <div class="node n-db nd" style="max-width:160px;">
+            INSERT INTO ...
+            <div class="desc">写入新记录</div>
+          </div>
+          <div class="arr-down green"></div>
+          <div class="node n-green n-start" style="max-width:160px;background:#22c55e;border-color:#16a34a;color:#fff;">
+            返回自增 ID
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="node n-db nd" style="max-width:160px;">
+            SELECT ... WHERE
+            <div class="desc">查询记录集</div>
+          </div>
+          <div class="arr-down green"></div>
+          <div class="node n-green n-start" style="max-width:160px;background:#22c55e;border-color:#16a34a;color:#fff;">
+            返回 List&lt;Entity&gt;
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="node n-db nd" style="max-width:160px;">
+            UPDATE ... SET
+            <div class="desc">更新字段值</div>
+          </div>
+          <div class="arr-down green"></div>
+          <div class="node n-green n-start" style="max-width:160px;background:#22c55e;border-color:#16a34a;color:#fff;">
+            返回影响行数
+          </div>
+        </div>
+        <div class="crud-col">
+          <div class="node n-db nd" style="max-width:160px;">
+            DELETE FROM ...
+            <div class="desc">删除记录</div>
+          </div>
+          <div class="arr-down green"></div>
+          <div class="node n-green n-start" style="max-width:160px;background:#22c55e;border-color:#16a34a;color:#fff;">
+            返回影响行数
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 响应回程 -->
+  <div style="text-align:center; padding: 12px 0; font-size: 12px; color: #64748b; font-weight: 600;">
+    ← ← ← 响应回程：数据库结果 → Service 封装 → Controller 返回 ApiResponse(code, data) → 前端渲染 ← ← ←
+  </div>
+
+  <!-- CRUD 接口汇总表 -->
+  <table class="crud-table">
+    <thead>
+      <tr>
+        <th>模块</th>
+        <th>Create（新增）</th>
+        <th>Read（查询）</th>
+        <th>Update（修改）</th>
+        <th>Delete（删除）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>设备管理</td>
+        <td class="c">POST /devices</td>
+        <td class="r">GET /devices<br>GET /devices/{id}</td>
+        <td class="u">PUT /devices/{id}</td>
+        <td class="d">DELETE /devices/{id}<br>（级联删除）</td>
+      </tr>
+      <tr>
+        <td>数据管理</td>
+        <td class="c">POST /sensor-data</td>
+        <td class="r">GET /latest<br>GET /history<br>GET /statistics</td>
+        <td class="u">PUT /sensor-data/{id}</td>
+        <td class="d">DELETE /sensor-data/{id}<br>DELETE /sensor-data（批量）</td>
+      </tr>
+      <tr>
+        <td>命令管理</td>
+        <td class="c">POST /commands</td>
+        <td class="r">GET /commands</td>
+        <td class="u">PUT /commands/{id}<br>（状态流转）</td>
+        <td class="d">DELETE /commands/{id}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="border-color:#3b82f6;background:#dbeafe;"></div>前端节点</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f97316;background:#ffedd5;"></div>后端节点</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#ef4444;background:#fee2e2;border-style:dashed;"></div>数据库操作</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#22c55e;background:#dcfce7;"></div>Create</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#3b82f6;background:#dbeafe;"></div>Read</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f59e0b;background:#fef3c7;"></div>Update</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#ef4444;background:#fee2e2;"></div>Delete</div>
+  </div>
+</div>
+</body>
+</html>

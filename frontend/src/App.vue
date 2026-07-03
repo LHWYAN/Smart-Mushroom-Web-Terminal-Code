@@ -24,8 +24,25 @@
       </nav>
 
       <div class="nav-stats">
-        <span class="stat-item">数据 <em>{{ stats.total_records || 0 }}</em></span>
-        <span class="stat-item">设备 <em>{{ stats.total_devices || 0 }}</em></span>
+        <!-- 未登录 → 显示登录按钮 -->
+        <template v-if="!user">
+          <router-link to="/login" class="nav-login-btn">
+            <el-icon><User /></el-icon>
+            <span>登录</span>
+          </router-link>
+        </template>
+
+        <!-- 已登录 → 显示用户信息 -->
+        <template v-else>
+          <div class="nav-user">
+            <div class="nav-avatar">{{ avatarText }}</div>
+            <span class="nav-nickname">{{ displayName }}</span>
+            <el-button text size="small" class="nav-logout-btn" @click="handleLogout">
+              退出
+            </el-button>
+          </div>
+        </template>
+
         <span v-if="updateTime" class="stat-time">{{ updateTime }}</span>
       </div>
     </header>
@@ -37,13 +54,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { getStatistics, getLatest } from './api'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { User } from '@element-plus/icons-vue'
+import { getStatistics, getLatest, isLoggedIn, getAuthUser, logout as logoutApi, setAuth } from './api'
 
 const route = useRoute()
+const router = useRouter()
 const stats = ref({})
 const updateTime = ref('')
+const user = ref(null)
 let timer = null
 
 const tabs = [
@@ -53,6 +73,18 @@ const tabs = [
   { path: '/commands', label: '命令', icon: '📋' },
   { path: '/ai', label: '问答', icon: '💬' },
 ]
+
+/** 用户昵称显示 */
+const displayName = computed(() => {
+  if (!user.value) return ''
+  return user.value.nickname || user.value.username || ''
+})
+
+/** 头像首字 */
+const avatarText = computed(() => {
+  if (!user.value) return ''
+  return (user.value.nickname || user.value.username || '?')[0]
+})
 
 async function refreshHeader() {
   try {
@@ -65,7 +97,21 @@ async function refreshHeader() {
   } catch (_) {}
 }
 
+function syncUser() {
+  user.value = getAuthUser()
+}
+
+async function handleLogout() {
+  try {
+    await logoutApi()
+  } catch (_) { /* ignore */ }
+  setAuth(null, null)
+  user.value = null
+  router.push('/login')
+}
+
 onMounted(() => {
+  syncUser()
   refreshHeader()
   timer = setInterval(refreshHeader, 5000)
 })
@@ -150,6 +196,7 @@ onUnmounted(() => clearInterval(timer))
   font-size: 16px;
 }
 
+/* ─── 导航右侧（用户 / 登录） ──────────── */
 .nav-stats {
   display: flex;
   align-items: center;
@@ -159,10 +206,61 @@ onUnmounted(() => clearInterval(timer))
   flex-shrink: 0;
 }
 
-.nav-stats em {
-  font-style: normal;
+.nav-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.nav-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(126, 200, 163, 0.5);
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-nickname {
+  font-weight: 600;
+  color: var(--text-title);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-logout-btn {
+  color: var(--text-hint) !important;
+  font-size: 12px !important;
+}
+
+.nav-logout-btn:hover {
+  color: var(--color-danger-text) !important;
 }
 
 .stat-time {

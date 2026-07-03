@@ -1,4 +1,14 @@
-CREATE TABLE IF NOT EXISTS device_info (
+-- ============================================================
+-- SQLite 初始化脚本
+-- 每次启动时清空并重建三张业务表，插入默认设备 roomone
+-- ============================================================
+
+-- 先删除有外键依赖的表（顺序：先子表后父表）
+DROP TABLE IF EXISTS device_commands;
+DROP TABLE IF EXISTS sensor_data;
+DROP TABLE IF EXISTS device_info;
+
+CREATE TABLE device_info (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id   TEXT NOT NULL UNIQUE,
     device_name TEXT NOT NULL DEFAULT '',
@@ -10,7 +20,7 @@ CREATE TABLE IF NOT EXISTS device_info (
     update_time TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
-CREATE TABLE IF NOT EXISTS sensor_data (
+CREATE TABLE sensor_data (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id   TEXT NOT NULL DEFAULT 'roomone',
     Temp        TEXT NOT NULL DEFAULT '',
@@ -26,9 +36,9 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     FOREIGN KEY (device_id) REFERENCES device_info(device_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_sensor_data_device ON sensor_data (device_id, create_time DESC);
+CREATE INDEX idx_sensor_data_device ON sensor_data (device_id, create_time DESC);
 
-CREATE TABLE IF NOT EXISTS device_commands (
+CREATE TABLE device_commands (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id   TEXT NOT NULL DEFAULT 'roomone',
     command     TEXT NOT NULL,
@@ -40,7 +50,8 @@ CREATE TABLE IF NOT EXISTS device_commands (
     FOREIGN KEY (device_id) REFERENCES device_info(device_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_commands_device ON device_commands (device_id, create_time DESC);
+CREATE INDEX idx_commands_device ON device_commands (device_id, create_time DESC);
 
-INSERT OR IGNORE INTO device_info (device_id, device_name, device_type, location, status)
-VALUES ('roomone', '一号房间', 'sensor', '沈阳网联实验室', 'offline');
+-- 插入默认设备 roomone（外键依赖的父记录）
+INSERT INTO device_info (device_id, device_name, device_type, location, status, remarks)
+VALUES ('roomone', '1号蘑菇大棚', 'sensor', '沈阳网联实验室', 'offline', 'WS63端侧默认设备');

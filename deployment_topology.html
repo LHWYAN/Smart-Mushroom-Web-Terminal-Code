@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>后端部署拓扑图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  .diagram { width: 1080px; }
+  .title-main {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+
+  /* 画布 */
+  .topology {
+    position: relative;
+    width: 100%;
+  }
+
+  /* 区域容器 */
+  .zone {
+    border-radius: 14px;
+    padding: 20px 18px 18px 18px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .zone-label {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 16px;
+    border-radius: 8px;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  /* 单机部署大框 */
+  .single-machine {
+    border: 3px solid #3b82f6;
+    background: #eff6ff;
+    border-radius: 16px;
+    padding: 24px 20px 20px 20px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .machine-label {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 5px 24px;
+    border-radius: 10px;
+    color: #fff;
+    background: #3b82f6;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+  }
+  .machine-sub {
+    text-align: center;
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 16px;
+  }
+
+  /* 内部组件行 */
+  .components-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: stretch;
+    margin-bottom: 14px;
+  }
+  .comp {
+    flex: 1;
+    max-width: 220px;
+    border-radius: 10px;
+    border: 2px solid;
+    padding: 14px 12px;
+    text-align: center;
+    position: relative;
+  }
+  .comp .icon { font-size: 28px; margin-bottom: 6px; }
+  .comp .name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .comp .desc { font-size: 11px; line-height: 1.5; }
+  .comp .port {
+    font-size: 10px;
+    font-family: "Consolas", monospace;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  /* 配色 */
+  .c-backend { background: #dbeafe; border-color: #3b82f6; }
+  .c-backend .name { color: #1e40af; } .c-backend .desc { color: #2563eb; }
+  .c-backend .port { background: #3b82f6; color: #fff; }
+
+  .c-frontend { background: #dcfce7; border-color: #22c55e; }
+  .c-frontend .name { color: #166534; } .c-frontend .desc { color: #15803d; }
+  .c-frontend .port { background: #22c55e; color: #fff; }
+
+  .c-db { background: #fee2e2; border-color: #ef4444; }
+  .c-db .name { color: #991b1b; } .c-db .desc { color: #b91c1c; }
+  .c-db .port { background: #ef4444; color: #fff; }
+
+  /* 内部连接箭头行 */
+  .internal-links {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .internal-links .link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .internal-links .arrow { color: #3b82f6; font-size: 14px; }
+
+  /* 外部设备行 */
+  .external-row {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: stretch;
+  }
+  .ext-zone {
+    border-radius: 14px;
+    padding: 18px 16px;
+    border: 2px solid;
+    flex: 1;
+  }
+  .ext-iotda { background: #f0fdfa; border-color: #14b8a6; }
+  .ext-iotda .zone-label { background: #14b8a6; }
+  .ext-dify { background: #faf5ff; border-color: #a855f7; }
+  .ext-dify .zone-label { background: #a855f7; }
+  .ext-browser { background: #fff7ed; border-color: #f97316; }
+  .ext-browser .zone-label { background: #f97316; }
+  .ext-device { background: #ecfeff; border-color: #06b6d4; }
+  .ext-device .zone-label { background: #06b6d4; }
+
+  .ext-content {
+    text-align: center;
+  }
+  .ext-content .icon { font-size: 32px; margin-bottom: 6px; }
+  .ext-content .name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .ext-content .desc { font-size: 11px; line-height: 1.5; }
+
+  /* SVG 连接线 */
+  .topology svg {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* 连接标注 */
+  .conn-label {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 4px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  /* 图例 */
+  .legend {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    margin-top: 18px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
+
+  .note {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.7;
+  }
+  .note b { color: #1e293b; }
+
+  /* 三列外部布局 */
+  .three-col {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .three-col > div { flex: 1; }
+
+  /* 中间连接区 */
+  .conn-section {
+    text-align: center;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .conn-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .conn-arrow .line {
+    width: 2px;
+    height: 28px;
+    position: relative;
+  }
+  .conn-arrow .line::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-style: solid;
+    border-width: 6px 4px 0 4px;
+    border-color: currentColor transparent transparent transparent;
+  }
+  .conn-arrow .line.up::after {
+    border-width: 0 4px 6px 4px;
+    border-color: transparent transparent currentColor transparent;
+    bottom: auto;
+    top: -1px;
+  }
+  .conn-arrow .label {
+    font-size: 10px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title-main">后端部署拓扑图</div>
+  <div class="subtitle">单机部署模式 — 开发与验收环境</div>
+
+  <!-- ========== 外部设备层 ========== -->
+  <div class="three-col" style="margin-bottom: 0;">
+    <!-- WS63 设备 -->
+    <div class="ext-zone ext-device" style="margin-bottom:0;">
+      <div class="zone-label">嵌入式设备</div>
+      <div class="ext-content">
+        <div class="icon">🔧</div>
+        <div class="name" style="color:#155e75;">WS63 开发板</div>
+        <div class="desc" style="color:#0e7490;">
+          FBB WS63 主板<br>
+          传感器 + 执行器<br>
+          WiFi 联网
+        </div>
+      </div>
+    </div>
+    <!-- 浏览器 -->
+    <div class="ext-zone ext-browser" style="margin-bottom:0;">
+      <div class="zone-label">客户端</div>
+      <div class="ext-content">
+        <div class="icon">🌐</div>
+        <div class="name" style="color:#9a3412;">浏览器</div>
+        <div class="desc" style="color:#c2410c;">
+          本机或局域网设备<br>
+          Chrome / Edge<br>
+          访问前端页面
+        </div>
+      </div>
+    </div>
+    <!-- 占位 -->
+    <div style="visibility:hidden;"></div>
+  </div>
+
+  <!-- 连接箭头 -->
+  <div class="three-col" style="margin-bottom: 0;">
+    <div class="conn-arrow" style="color:#06b6d4;">
+      <div class="label">WiFi → 互联网</div>
+      <div class="line"></div>
+      <div class="label">MQTT 属性上报</div>
+    </div>
+    <div class="conn-arrow" style="color:#f97316;">
+      <div class="label">HTTP / WebSocket</div>
+      <div class="line"></div>
+      <div class="label">localhost / LAN</div>
+    </div>
+    <div></div>
+  </div>
+
+  <!-- ========== 外部云服务层 ========== -->
+  <div class="three-col" style="margin-bottom: 16px;">
+    <div class="ext-zone ext-iotda" style="margin-bottom:0;">
+      <div class="zone-label">华为云</div>
+      <div class="ext-content">
+        <div class="icon">☁️</div>
+        <div class="name" style="color:#0f766e;">IoTDA 设备接入</div>
+        <div class="desc" style="color:#0e7490;">
+          设备管理 / 数据转发<br>
+          AMQP 消息队列推送<br>
+          规则引擎
+        </div>
+      </div>
+    </div>
+    <div style="visibility:hidden;"></div>
+    <div class="ext-zone ext-dify" style="margin-bottom:0;">
+      <div class="zone-label">AI 平台</div>
+      <div class="ext-content">
+        <div class="icon">🤖</div>
+        <div class="name" style="color:#6b21a8;">Dify 大模型平台</div>
+        <div class="desc" style="color:#7e22ce;">
+          DeepSeek-R1 推理<br>
+          /v1/chat-messages API<br>
+          AI 种植问答
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 连接箭头 -->
+  <div class="three-col" style="margin-bottom: 0;">
+    <div class="conn-arrow" style="color:#14b8a6;">
+      <div class="label">AMQP 队列推送</div>
+      <div class="line"></div>
+    </div>
+    <div></div>
+    <div class="conn-arrow" style="color:#a855f7;">
+      <div class="label">HTTP API 调用</div>
+      <div class="line"></div>
+    </div>
+  </div>
+
+  <!-- ========== 单机部署大框 ========== -->
+  <div class="single-machine">
+    <div class="machine-label">🖥️ 单机部署主机（Windows / Linux）</div>
+    <div class="machine-sub">同一台电脑运行后端服务、前端开发服务器和金仓数据库</div>
+
+    <!-- 三个核心组件 -->
+    <div class="components-row">
+
+      <!-- 后端 -->
+      <div class="comp c-backend">
+        <div class="icon">☕</div>
+        <div class="name">Spring Boot 后端</div>
+        <div class="desc">
+          Java 17 + Spring Boot 3.2<br>
+          REST API + WebSocket<br>
+          AMQP 消费者 (Qpid JMS)<br>
+          JaCoCo + Knife4j
+        </div>
+        <div class="port">:8080</div>
+      </div>
+
+      <!-- 前端 -->
+      <div class="comp c-frontend">
+        <div class="icon">⚛️</div>
+        <div class="name">Vite 前端服务器</div>
+        <div class="desc">
+          Vue 3 + Vite 6<br>
+          AxMAxios + ECharts<br>
+          路由守卫 + JWT<br>
+          Vitest 单元测试
+        </div>
+        <div class="port">:5173</div>
+      </div>
+
+      <!-- 数据库 -->
+      <div class="comp c-db">
+        <div class="icon">🗄️</div>
+        <div class="name">KingbaseES 金仓数据库</div>
+        <div class="desc">
+          国产数据库 V8R6<br>
+          4 张业务表<br>
+          device_info · sensor_data<br>
+          device_commands · users
+        </div>
+        <div class="port">:54321</div>
+      </div>
+
+    </div>
+
+    <!-- 内部连接 -->
+    <div class="internal-links">
+      <div class="link">
+        前端 :5173 <span class="arrow">→</span> 后端 :8080
+        <span style="color:#64748b;font-weight:400;">(proxy /api)</span>
+      </div>
+      <div class="link">
+        后端 :8080 <span class="arrow" style="color:#ef4444;">→</span> KingbaseES :54321
+        <span style="color:#64748b;font-weight:400;">(JDBC)</span>
+      </div>
+      <div class="link">
+        后端 :8080 <span class="arrow" style="color:#a855f7;">→</span> SQLite
+        <span style="color:#64748b;font-weight:400;">(sensor_data.db 本地文件)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="border-color:#06b6d4;background:#ecfeff;"></div>WS63 设备</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f97316;background:#fff7ed;"></div>浏览器</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#14b8a6;background:#f0fdfa;"></div>华为云 IoTDA</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#a855f7;background:#faf5ff;"></div>Dify AI 平台</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#3b82f6;background:#dbeafe;"></div>后端服务</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#22c55e;background:#dcfce7;"></div>前端服务</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#ef4444;background:#fee2e2;"></div>KingbaseES</div>
+  </div>
+
+  <div class="note">
+    <b>部署说明：</b>开发与验收环境采用单机部署模式。后端 Spring Boot 服务（:8080）、前端 Vite 开发服务器（:5173）和 KingbaseES 金仓数据库（:54321）均运行在同一台 Windows 或 Linux 电脑上。WS63 设备通过 WiFi 接入互联网并连接华为云 IoTDA，IoTDA 通过 AMQP 队列将设备数据推送至后端。浏览器可在本机（localhost）或局域网其他设备通过 IP 访问前端页面。AI 功能需要后端能够访问 Dify API 地址（HTTP 请求）。前端通过 Vite proxy 将 <code>/api</code> 请求代理到后端 :8080 端口，后端通过 JDBC 连接 KingbaseES :54321，同时使用本地 SQLite 文件（sensor_data.db）作为业务数据源。
+  </div>
+</div>
+</body>
+</html>

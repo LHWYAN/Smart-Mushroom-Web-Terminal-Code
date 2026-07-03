@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>数据库 E-R 图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  .diagram { width: 1100px; }
+  .title-main {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+
+  /* E-R 画布 */
+  .er-canvas {
+    position: relative;
+    width: 100%;
+    height: 680px;
+  }
+
+  /* 实体表 */
+  .entity {
+    position: absolute;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 12px;
+  }
+  .entity-header {
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .entity-header .icon {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .entity-body {
+    background: #fff;
+    border: 2px solid;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+  }
+  .field {
+    display: flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 11px;
+  }
+  .field:last-child { border-bottom: none; }
+  .field .key {
+    width: 18px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10px;
+    margin-right: 6px;
+  }
+  .field .name {
+    flex: 1;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .field .type {
+    font-size: 10px;
+    color: #64748b;
+    font-family: "Consolas", "Courier New", monospace;
+    margin-left: 8px;
+  }
+  .pk { color: #f59e0b; }
+  .fk { color: #3b82f6; }
+  .uk { color: #22c55e; }
+
+  /* 实体配色 */
+  .e-device .entity-header { background: #3b82f6; }
+  .e-device .entity-body { border-color: #3b82f6; }
+  .e-sensor .entity-header { background: #06b6d4; }
+  .e-sensor .entity-body { border-color: #06b6d4; }
+  .e-command .entity-header { background: #22c55e; }
+  .e-command .entity-body { border-color: #22c55e; }
+  .e-user .entity-header { background: #ef4444; }
+  .e-user .entity-body { border-color: #ef4444; }
+
+  /* 连接线 SVG */
+  .er-canvas svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .entity { z-index: 1; }
+
+  /* 关系菱形 */
+  .relation {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .relation-diamond {
+    width: 100px;
+    height: 50px;
+    background: #fef3c7;
+    border: 2px solid #f59e0b;
+    transform: rotate(45deg);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .relation-label {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400e;
+    text-align: center;
+    line-height: 1.3;
+    z-index: 3;
+  }
+
+  /* 基数标签 */
+  .cardinality {
+    position: absolute;
+    z-index: 3;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ef4444;
+    background: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #fca5a5;
+  }
+
+  /* 数据库标注 */
+  .db-badge {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #fff;
+    z-index: 4;
+  }
+  .db-mp { background: #a855f7; }
+  .db-jt { background: #dc2626; }
+
+  /* 图例 */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; }
+  .legend-key {
+    width: 18px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10px;
+  }
+
+  .note {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.7;
+  }
+  .note b { color: #1e293b; }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title-main">数据库 E-R 图</div>
+  <div class="subtitle">KingbaseES 金仓数据库 — 4 张业务表，MyBatis-Plus + JdbcTemplate 双数据访问</div>
+
+  <div class="er-canvas">
+
+    <!-- 连接线 SVG -->
+    <svg viewBox="0 0 1100 680" preserveAspectRatio="none">
+      <defs>
+        <marker id="dot" markerWidth="8" markerHeight="8" refX="4" refY="4">
+          <circle cx="4" cy="4" r="3" fill="#64748b"/>
+        </marker>
+      </defs>
+
+      <!-- device_info (中心) → sensor_data 关系线 -->
+      <!-- device_info 右侧 x=580, y=170 → 关系菱形 x=680,y=170 → sensor_data 左侧 x=760,y=170 -->
+      <line x1="490" y1="200" x2="560" y2="200" stroke="#f59e0b" stroke-width="2" stroke-dasharray="0"/>
+      <line x1="620" y1="200" x2="690" y2="200" stroke="#f59e0b" stroke-width="2"/>
+
+      <!-- device_info → device_commands 关系线 -->
+      <!-- device_info 底部 x=345,y=290 → 向下 → commands 顶部 x=345,y=420 -->
+      <line x1="345" y1="340" x2="345" y2="440" stroke="#f59e0b" stroke-width="2"/>
+
+      <!-- users 独立无连线 -->
+    </svg>
+
+    <!-- ========== device_info 实体（中心偏左） ========== -->
+    <div class="entity e-device" style="left: 100px; top: 80px; width: 390px;">
+      <div class="entity-header">
+        <div class="icon">📋</div>
+        device_info · 设备信息表
+        <div class="db-badge db-mp">MyBatis-Plus</div>
+      </div>
+      <div class="entity-body">
+        <div class="field">
+          <div class="key pk">PK</div>
+          <div class="name">id</div>
+          <div class="type">SERIAL</div>
+        </div>
+        <div class="field">
+          <div class="key uk">UQ</div>
+          <div class="name">device_id</div>
+          <div class="type">VARCHAR(100) NOT NULL</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">device_name</div>
+          <div class="type">VARCHAR(200) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">device_type</div>
+          <div class="type">VARCHAR(50) DEFAULT 'sensor'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">location</div>
+          <div class="type">VARCHAR(200) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">status</div>
+          <div class="type">VARCHAR(50) DEFAULT 'offline'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">remarks</div>
+          <div class="type">TEXT DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">create_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">update_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== sensor_data 实体（右上） ========== -->
+    <div class="entity e-sensor" style="left: 700px; top: 60px; width: 360px;">
+      <div class="entity-header">
+        <div class="icon">📡</div>
+        sensor_data · 传感器数据表
+        <div class="db-badge db-mp">MyBatis-Plus</div>
+      </div>
+      <div class="entity-body">
+        <div class="field">
+          <div class="key pk">PK</div>
+          <div class="name">id</div>
+          <div class="type">SERIAL</div>
+        </div>
+        <div class="field">
+          <div class="key fk">FK</div>
+          <div class="name">device_id</div>
+          <div class="type">VARCHAR(100) → device_info</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">Temp</div>
+          <div class="type">VARCHAR(50) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">Humi</div>
+          <div class="type">VARCHAR(50) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">Lumi</div>
+          <div class="type">VARCHAR(50) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">LampST</div>
+          <div class="type">VARCHAR(20) DEFAULT 'OFF'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">CondST</div>
+          <div class="type">VARCHAR(20) DEFAULT 'OFF'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">VentST</div>
+          <div class="type">VARCHAR(20) DEFAULT 'OFF'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">BuzzerST</div>
+          <div class="type">VARCHAR(20) DEFAULT 'OFF'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">Smoke</div>
+          <div class="type">VARCHAR(50) DEFAULT '0'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">CO2</div>
+          <div class="type">VARCHAR(50) DEFAULT '400'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">create_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关系菱形：device_info → sensor_data -->
+    <div class="relation" style="left: 510px; top: 180px;">
+      <div class="relation-diamond"></div>
+    </div>
+    <div class="relation-label" style="left: 530px; top: 190px; width: 80px;">
+      拥有数据
+    </div>
+    <div class="cardinality" style="left: 495px; top: 175px;">1</div>
+    <div class="cardinality" style="left: 640px; top: 175px;">N</div>
+
+    <!-- ========== device_commands 实体（下方） ========== -->
+    <div class="entity e-command" style="left: 100px; top: 440px; width: 390px;">
+      <div class="entity-header">
+        <div class="icon">⚙</div>
+        device_commands · 命令记录表
+        <div class="db-badge db-mp">MyBatis-Plus</div>
+      </div>
+      <div class="entity-body">
+        <div class="field">
+          <div class="key pk">PK</div>
+          <div class="name">id</div>
+          <div class="type">SERIAL</div>
+        </div>
+        <div class="field">
+          <div class="key fk">FK</div>
+          <div class="name">device_id</div>
+          <div class="type">VARCHAR(100) → device_info</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">command</div>
+          <div class="type">VARCHAR(100) NOT NULL</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">param_key</div>
+          <div class="type">VARCHAR(100) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">param_value</div>
+          <div class="type">VARCHAR(100) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">status</div>
+          <div class="type">VARCHAR(50) DEFAULT 'pending'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">create_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">update_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关系菱形：device_info → device_commands -->
+    <div class="relation" style="left: 300px; top: 365px;">
+      <div class="relation-diamond" style="width:80px;height:40px;"></div>
+    </div>
+    <div class="relation-label" style="left: 308px; top: 375px; width: 70px;">
+      拥有命令
+    </div>
+    <div class="cardinality" style="left: 280px; top: 360px;">1</div>
+    <div class="cardinality" style="left: 360px; top: 415px;">N</div>
+
+    <!-- ========== users 实体（右下，独立） ========== -->
+    <div class="entity e-user" style="left: 700px; top: 400px; width: 360px;">
+      <div class="entity-header">
+        <div class="icon">👤</div>
+        users · 用户认证表
+        <div class="db-badge db-jt">JdbcTemplate</div>
+      </div>
+      <div class="entity-body">
+        <div class="field">
+          <div class="key pk">PK</div>
+          <div class="name">id</div>
+          <div class="type">SERIAL</div>
+        </div>
+        <div class="field">
+          <div class="key uk">UQ</div>
+          <div class="name">username</div>
+          <div class="type">VARCHAR(100) NOT NULL UNIQUE</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">password</div>
+          <div class="type">VARCHAR(255) — BCrypt hash</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">nickname</div>
+          <div class="type">VARCHAR(100) DEFAULT ''</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">role</div>
+          <div class="type">VARCHAR(20) DEFAULT 'user'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">status</div>
+          <div class="type">VARCHAR(20) DEFAULT 'active'</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">create_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+        <div class="field">
+          <div class="key"></div>
+          <div class="name">update_time</div>
+          <div class="type">TIMESTAMP DEFAULT NOW()</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- users 独立标注 -->
+    <div style="position:absolute; left:720px; top:370px; font-size:11px; color:#ef4444; font-weight:700;">
+      ⊘ 独立于设备业务关系
+    </div>
+
+  </div>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-key pk">PK</div>主键</div>
+    <div class="legend-item"><div class="legend-key fk">FK</div>外键</div>
+    <div class="legend-item"><div class="legend-key uk">UQ</div>唯一约束</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>device_info</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div>sensor_data</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>device_commands</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>users</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#a855f7;"></div>MyBatis-Plus 访问</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dc2626;"></div>JdbcTemplate 访问</div>
+  </div>
+
+  <div class="note">
+    <b>表关系说明：</b>device_info 为核心实体，通过 device_id 字段与 sensor_data（1:N）和 device_commands（1:N）建立外键关联。删除设备时由 <b>DeviceService.delete()</b> 主动级联删除关联的传感器数据和命令记录。<b>users</b> 表独立于设备业务关系，专用于用户认证，通过 JdbcTemplate 原生 SQL 访问。四张表均建在 KingbaseES 金仓数据库上，满足"金仓数据库上建 3 个以上数据表"的任务要求（实际 4 张）。<br>
+    <b>建表方式：</b>前三张表由 <code>schema-kingbasees.sql</code> 脚本初始化（DROP + CREATE + INSERT 默认设备）；users 表由 <code>AuthService.initTable()</code> 在系统启动时通过 <code>CREATE TABLE IF NOT EXISTS</code> 自动建表。
+  </div>
+</div>
+</body>
+</html>

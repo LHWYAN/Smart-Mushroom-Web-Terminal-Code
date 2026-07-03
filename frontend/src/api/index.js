@@ -32,3 +32,29 @@ export const updateCommandStatus = (id, status) => api.put(`/commands/${id}`, nu
 export const deleteCommand = (id) => api.delete(`/commands/${id}`)
 
 export const aiChat = (question) => api.post('/ai/chat', { question })
+
+// ─── 认证 / Token 管理 ─────────────────────────────
+let authToken = localStorage.getItem('auth_token') || ''
+let currentUser = JSON.parse(localStorage.getItem('auth_user') || 'null')
+
+/** 设置认证信息（token + 用户对象），持久化到 localStorage 并更新 axios header */
+export function setAuth(token, user) {
+  authToken = token
+  currentUser = user
+  localStorage.setItem('auth_token', token || '')
+  localStorage.setItem('auth_user', user ? JSON.stringify(user) : '')
+  if (token) api.defaults.headers.common['Authorization'] = 'Bearer ' + token
+  else delete api.defaults.headers.common['Authorization']
+}
+
+export function getAuthUser() { return currentUser }
+export function isLoggedIn() { return !!authToken }
+
+// 初始化：已有 token 则设置请求头
+if (authToken) api.defaults.headers.common['Authorization'] = 'Bearer ' + authToken
+
+// ─── 认证 API ──────────────────────────────────────
+export const register = (data) => api.post('/auth/register', data)
+export const login = (data) => api.post('/auth/login', data)
+export const getProfile = () => api.get('/auth/profile')
+export const logout = () => api.post('/auth/logout')

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>系统总体架构图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  .diagram {
+    width: 1100px;
+  }
+  .layer-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+    border-left: 3px solid #cbd5e1;
+    padding-left: 8px;
+  }
+  .layer {
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .row {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .card {
+    flex: 1;
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 64px;
+  }
+  .card .title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .card .desc { font-size: 12px; line-height: 1.5; }
+
+  /* 前端层 */
+  .fe-card { background: #eff6ff; border-color: #3b82f6; }
+  .fe-card .title { color: #1e40af; }
+  .fe-card .desc { color: #3b82f6; }
+
+  /* API 层 */
+  .api-card { background: #fff7ed; border-color: #f97316; }
+  .api-card .title { color: #9a3412; }
+  .api-card .desc { color: #c2410c; }
+
+  /* 业务层 */
+  .biz-card { background: #f0fdf4; border-color: #22c55e; }
+  .biz-card .title { color: #166534; }
+  .biz-card .desc { color: #15803d; }
+
+  /* 数据源层 - 重点突出 */
+  .ds-card {
+    border-width: 3px;
+    position: relative;
+  }
+  .ds-mybatis { background: #faf5ff; border-color: #a855f7; }
+  .ds-mybatis .title { color: #6b21a8; }
+  .ds-mybatis .desc { color: #7e22ce; }
+  .ds-kingbase { background: #fef2f2; border-color: #ef4444; }
+  .ds-kingbase .title { color: #991b1b; }
+  .ds-kingbase .desc { color: #b91c1c; }
+  .ds-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .ds-badge.purple { background: #a855f7; }
+  .ds-badge.red { background: #ef4444; }
+
+  /* 外部服务层 */
+  .ext-card { background: #f8fafc; border-color: #64748b; }
+  .ext-card .title { color: #334155; }
+  .ext-card .desc { color: #475569; }
+
+  /* 嵌入式层 */
+  .emb-card { background: #ecfeff; border-color: #06b6d4; }
+  .emb-card .title { color: #155e75; }
+  .emb-card .desc { color: #0e7490; }
+
+  /* 箭头 */
+  .arrow {
+    text-align: center;
+    margin: 10px 0;
+    position: relative;
+    height: 30px;
+  }
+  .arrow svg { width: 100%; height: 30px; }
+
+  /* 双数据源标注 */
+  .ds-group {
+    border: 2px dashed #fbbf24;
+    border-radius: 14px;
+    padding: 18px 16px 16px 16px;
+    background: #fffbeb;
+    position: relative;
+    margin-top: 4px;
+  }
+  .ds-group-label {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 14px;
+    border-radius: 8px;
+  }
+
+  .title-main {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 24px;
+  }
+
+  /* 图例 */
+  .legend {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #64748b;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title-main">智慧蘑菇种植监控系统 — 总体架构图</div>
+
+  <!-- 嵌入式设备层 -->
+  <div class="layer">
+    <div class="layer-label">嵌入式设备层</div>
+    <div class="row">
+      <div class="card emb-card">
+        <div class="title">FBB WS63 开发板</div>
+        <div class="desc">温湿度 / CO₂ / 光照 / 烟雾传感器<br>华为 IoTDA 设备接入 SDK</div>
+      </div>
+      <div class="card emb-card" style="flex:0.6;">
+        <div class="title">传感器采集</div>
+        <div class="desc">Temp / Humi / Lumi / CO₂<br>Smoke / LampST / VentST</div>
+      </div>
+      <div class="card emb-card" style="flex:0.6;">
+        <div class="title">执行器控制</div>
+        <div class="desc">风扇 / 水泵 / 补光灯<br>蜂鸣器 / 窗帘</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头：设备 → IoTDA -->
+  <div class="arrow">
+    <svg viewBox="0 0 1100 30" preserveAspectRatio="none">
+      <defs>
+        <marker id="arr1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+          <polygon points="0,0 8,4 0,8" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <line x1="550" y1="0" x2="550" y2="28" stroke="#06b6d4" stroke-width="2" marker-end="url(#arr1)"/>
+      <text x="565" y="18" font-size="11" fill="#06b6d4">MQTT 上报</text>
+    </svg>
+  </div>
+
+  <!-- 外部服务层 -->
+  <div class="layer">
+    <div class="layer-label">外部云服务层</div>
+    <div class="row">
+      <div class="card ext-card">
+        <div class="title">华为云 IoTDA</div>
+        <div class="desc">设备管理 / 数据转发<br>AMQP 消息队列推送</div>
+      </div>
+      <div class="card ext-card">
+        <div class="title">Dify 大模型平台</div>
+        <div class="desc">AI 种植问答引擎<br>LLM 推理 / 思考链清洗</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头：IoTDA → AMQP Consumer -->
+  <div class="arrow">
+    <svg viewBox="0 0 1100 30" preserveAspectRatio="none">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+          <polygon points="0,0 8,4 0,8" fill="#64748b"/>
+        </marker>
+      </defs>
+      <line x1="275" y1="0" x2="275" y2="28" stroke="#64748b" stroke-width="2" marker-end="url(#arr2)"/>
+      <text x="290" y="18" font-size="11" fill="#64748b">AMQP 消费</text>
+      <line x1="825" y1="28" x2="825" y2="2" stroke="#64748b" stroke-width="2" marker-end="url(#arr2)" transform="rotate(0, 825, 14)"/>
+      <text x="840" y="18" font-size="11" fill="#64748b">HTTP / SSE</text>
+    </svg>
+  </div>
+
+  <!-- 后端 Spring Boot 层 -->
+  <div class="layer">
+    <div class="layer-label">后端服务层 — Spring Boot 3 + Java 17</div>
+
+    <!-- AMQP 消费 + WebSocket -->
+    <div class="row" style="margin-bottom:12px;">
+      <div class="card biz-card" style="flex:0.5;">
+        <div class="title">DataConsumerManager</div>
+        <div class="desc">AMQP 消费者<br>解析传感器 JSON → 入库</div>
+      </div>
+      <div class="card biz-card" style="flex:0.5;">
+        <div class="title">RealtimeWebSocket</div>
+        <div class="desc">WebSocket 推送<br>实时数据广播</div>
+      </div>
+    </div>
+
+    <!-- Controller 层 -->
+    <div class="row" style="margin-bottom:12px;">
+      <div class="card api-card" style="flex:0.33;">
+        <div class="title">DataController</div>
+        <div class="desc">传感器数据 CRUD<br>/latest /history /statistics</div>
+      </div>
+      <div class="card api-card" style="flex:0.33;">
+        <div class="title">DeviceController</div>
+        <div class="desc">设备注册 / 查询 / 删除<br>设备在线状态管理</div>
+      </div>
+      <div class="card api-card" style="flex:0.33;">
+        <div class="title">CommandController</div>
+        <div class="desc">下行命令管理<br>命令状态追踪</div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:12px;">
+      <div class="card api-card" style="flex:0.33;">
+        <div class="title">AiController</div>
+        <div class="desc">AI 种植问答<br>调用 Dify LLM API</div>
+      </div>
+      <div class="card api-card" style="flex:0.33;">
+        <div class="title">AuthController</div>
+        <div class="desc">用户注册 / 登录 / 登出<br>JWT Token 认证</div>
+      </div>
+      <div class="card api-card" style="flex:0.33;">
+        <div class="title">HealthController</div>
+        <div class="desc">系统健康检查<br>运行状态聚合</div>
+      </div>
+    </div>
+
+    <!-- Service 层 -->
+    <div class="row" style="margin-bottom:12px;">
+      <div class="card biz-card" style="flex:0.25;">
+        <div class="title">SensorDataService</div>
+        <div class="desc">传感器数据业务逻辑</div>
+      </div>
+      <div class="card biz-card" style="flex:0.25;">
+        <div class="title">DeviceService</div>
+        <div class="desc">设备管理业务逻辑</div>
+      </div>
+      <div class="card biz-card" style="flex:0.25;">
+        <div class="title">CommandService</div>
+        <div class="desc">命令管理业务逻辑</div>
+      </div>
+      <div class="card biz-card" style="flex:0.25;">
+        <div class="title">StatisticsService</div>
+        <div class="desc">统计聚合 + 缓存优先</div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:12px;">
+      <div class="card biz-card" style="flex:0.33;">
+        <div class="title">AiService</div>
+        <div class="desc">Dify API 调用 + 回答清洗</div>
+      </div>
+      <div class="card biz-card" style="flex:0.33;">
+        <div class="title">AuthService</div>
+        <div class="desc">用户认证 + BCrypt + JWT</div>
+      </div>
+      <div class="card biz-card" style="flex:0.33;">
+        <div class="title">LatestDataHolder</div>
+        <div class="desc">内存缓存最新传感器数据</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头：Service → 双数据源 -->
+  <div class="arrow">
+    <svg viewBox="0 0 1100 30" preserveAspectRatio="none">
+      <defs>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+          <polygon points="0,0 8,4 0,8" fill="#a855f7"/>
+        </marker>
+        <marker id="arr4" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+          <polygon points="0,0 8,4 0,8" fill="#ef4444"/>
+        </marker>
+      </defs>
+      <line x1="275" y1="0" x2="275" y2="28" stroke="#a855f7" stroke-width="2" marker-end="url(#arr3)"/>
+      <text x="160" y="18" font-size="11" fill="#a855f7">MyBatis-Plus Mapper</text>
+      <line x1="825" y1="0" x2="825" y2="28" stroke="#ef4444" stroke-width="2" marker-end="url(#arr4)"/>
+      <text x="840" y="18" font-size="11" fill="#ef4444">JdbcTemplate</text>
+    </svg>
+  </div>
+
+  <!-- 双数据源层 -->
+  <div class="ds-group">
+    <div class="ds-group-label">★ 双数据源架构</div>
+    <div class="row">
+      <div class="card ds-card ds-mybatis">
+        <div class="ds-badge purple">数据源 ①</div>
+        <div class="title">SQLite — 业务数据源</div>
+        <div class="desc">
+          Spring DataSource (HikariCP)<br>
+          MyBatis-Plus ORM 映射<br>
+          <b>表：</b>sensor_data · device_info · device_command<br>
+          <b>用途：</b>传感器数据 / 设备管理 / 命令记录
+        </div>
+      </div>
+      <div class="card ds-card ds-kingbase">
+        <div class="ds-badge red">数据源 ②</div>
+        <div class="title">KingbaseES — 认证数据源</div>
+        <div class="desc">
+          KingbaseConfig (HikariCP 独立连接池)<br>
+          JdbcTemplate 手动 SQL<br>
+          <b>表：</b>users<br>
+          <b>用途：</b>用户注册 / 登录验证 / JWT 签发
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头：前端 → 后端 -->
+  <div class="arrow" style="margin-top:22px;">
+    <svg viewBox="0 0 1100 30" preserveAspectRatio="none">
+      <defs>
+        <marker id="arr5" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+          <polygon points="0,0 8,4 0,8" fill="#3b82f6"/>
+        </marker>
+      </defs>
+      <line x1="550" y1="28" x2="550" y2="2" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr5)"/>
+      <text x="565" y="18" font-size="11" fill="#3b82f6">REST API / WebSocket</text>
+    </svg>
+  </div>
+
+  <!-- 前端层 -->
+  <div class="layer">
+    <div class="layer-label">客户端展示层</div>
+    <div class="row">
+      <div class="card fe-card">
+        <div class="title">Web 大屏 (Vue 3 + Vite)</div>
+        <div class="desc">仪表盘 / 设备管理 / 数据管理<br>命令管理 / AI 种植问答<br>Axios + ECharts + WebSocket</div>
+      </div>
+      <div class="card fe-card">
+        <div class="title">鸿蒙端 (HarmonyOS ArkTS)</div>
+        <div class="desc">设备监控 / 生长批次管理<br>实时图表 / 主题切换<br>Hypium 单元测试</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="border-color:#06b6d4;background:#ecfeff;"></div>嵌入式</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#64748b;background:#f8fafc;"></div>外部云服务</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#f97316;background:#fff7ed;"></div>Controller</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#22c55e;background:#f0fdf4;"></div>Service / Consumer</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#a855f7;background:#faf5ff;"></div>数据源 ① MyBatis-Plus</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#ef4444;background:#fef2f2;"></div>数据源 ② KingbaseES</div>
+    <div class="legend-item"><div class="legend-dot" style="border-color:#3b82f6;background:#eff6ff;"></div>客户端</div>
+  </div>
+</div>
+</body>
+</html>

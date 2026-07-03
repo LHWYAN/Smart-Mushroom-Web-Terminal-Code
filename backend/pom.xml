@@ -46,6 +46,17 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- KingbaseES JDBC 驱动 -->
+        <dependency>
+            <groupId>com.kingbase8</groupId>
+            <artifactId>kingbase8-jdbc</artifactId>
+            <version>8.6.0</version>
+        </dependency>
+        <!-- Spring Security Crypto（仅BCrypt，不引入完整Security框架） -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
