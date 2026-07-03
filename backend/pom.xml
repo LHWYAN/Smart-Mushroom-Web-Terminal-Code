@@ -87,6 +87,31 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- JaCoCo 覆盖率插件：prepare-agent 在 test 前注入探针，report 在 test 阶段生成 HTML 报告 -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version>
+                <configuration>
+                    <includes>
+                        <include>com/smartmushroom/**</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

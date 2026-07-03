@@ -1,43 +1,53 @@
 <template>
   <div>
-    <div class="toolbar">
-      <el-button type="primary" @click="visible = true">插入命令</el-button>
-      <el-input v-model="deviceFilter" placeholder="按设备ID过滤..." style="width:160px" clearable @change="load" />
-      <span class="hint">共 {{ list.length }} 条</span>
-    </div>
+    <h2 class="page-title">命令管理</h2>
+    <p class="page-title-desc">记录与跟踪设备控制命令的下发与执行状态</p>
 
-    <el-table :data="list" stripe border size="small" max-height="520">
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="device_id" label="设备" width="100" />
-      <el-table-column prop="command" label="命令" />
-      <el-table-column prop="param_key" label="参数键" />
-      <el-table-column prop="param_value" label="参数值" width="80" />
-      <el-table-column prop="status" label="状态" width="90">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 'success' ? 'success' : row.status === 'fail' ? 'danger' : 'info'" size="small">{{ row.status }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="create_time" label="时间" width="170" />
-      <el-table-column label="操作" width="200" fixed="right">
-        <template #default="{ row }">
-          <template v-if="row.status === 'pending'">
-            <el-button size="small" type="success" @click="setStatus(row.id, 'success')">成功</el-button>
-            <el-button size="small" type="warning" @click="setStatus(row.id, 'fail')">失败</el-button>
+    <GlassCard class="data-table-card">
+      <div class="page-toolbar">
+        <el-button type="primary" @click="visible = true">下发命令</el-button>
+        <el-input v-model="deviceFilter" placeholder="按设备 ID 过滤..." style="width:180px" clearable @change="load" />
+        <span class="hint">共 {{ list.length }} 条</span>
+      </div>
+
+      <el-table :data="list" stripe size="small" max-height="520">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="device_id" label="设备" width="100" />
+        <el-table-column prop="command" label="命令" min-width="100">
+          <template #default="{ row }"><code class="cmd-code">{{ row.command }}</code></template>
+        </el-table-column>
+        <el-table-column prop="param_key" label="参数键" width="110" />
+        <el-table-column prop="param_value" label="参数值" width="80" />
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag
+              :type="row.status === 'success' ? 'success' : row.status === 'fail' ? 'danger' : 'warning'"
+              size="small" effect="light"
+            >{{ statusLabel(row.status) }}</el-tag>
           </template>
-          <el-button size="small" type="danger" @click="remove(row.id)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        </el-table-column>
+        <el-table-column prop="create_time" label="时间" width="170" />
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <template v-if="row.status === 'pending'">
+              <el-button size="small" text type="success" @click="setStatus(row.id, 'success')">成功</el-button>
+              <el-button size="small" text type="warning" @click="setStatus(row.id, 'fail')">失败</el-button>
+            </template>
+            <el-button size="small" text type="danger" @click="remove(row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </GlassCard>
 
-    <el-dialog v-model="visible" title="插入命令" width="420px">
+    <el-dialog v-model="visible" title="下发控制命令" width="420px">
       <el-form label-width="80px">
-        <el-form-item label="设备ID"><el-input v-model="form.device_id" /></el-form-item>
+        <el-form-item label="设备 ID"><el-input v-model="form.device_id" /></el-form-item>
         <el-form-item label="命令">
-          <el-select v-model="form.command" style="width:100%">
-            <el-option v-for="c in ['SetLamp','SetCond','SetVent','SetBuzzer']" :key="c" :label="c" :value="c" />
+          <el-select v-model="form.command" style="width:100%" @change="onCommandChange">
+            <el-option v-for="c in commands" :key="c.value" :label="c.label" :value="c.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="参数键"><el-input v-model="form.param_key" placeholder="如 LampStatus" /></el-form-item>
+        <el-form-item label="参数键"><el-input v-model="form.param_key" /></el-form-item>
         <el-form-item label="参数值">
           <el-select v-model="form.param_value" style="width:100%"><el-option label="ON" value="ON" /><el-option label="OFF" value="OFF" /></el-select>
         </el-form-item>
@@ -53,12 +63,30 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import GlassCard from '../components/GlassCard.vue'
 import { getCommands, insertCommand, updateCommandStatus, deleteCommand } from '../api'
 
 const list = ref([])
 const deviceFilter = ref('')
 const visible = ref(false)
 const form = ref({ device_id: 'roomone', command: 'SetLamp', param_key: 'LampStatus', param_value: 'ON' })
+
+const commands = [
+  { value: 'SetLamp', label: 'SetLamp · 照明灯' },
+  { value: 'SetCond', label: 'SetCond · 空调' },
+  { value: 'SetVent', label: 'SetVent · 排风扇' },
+  { value: 'SetBuzzer', label: 'SetBuzzer · 蜂鸣器' },
+]
+
+const paramKeyMap = { SetLamp: 'LampStatus', SetCond: 'CondStatus', SetVent: 'VentStatus', SetBuzzer: 'BuzzerStatus' }
+
+function statusLabel(s) {
+  return { pending: '待执行', success: '成功', fail: '失败' }[s] || s
+}
+
+function onCommandChange(cmd) {
+  form.value.param_key = paramKeyMap[cmd] || ''
+}
 
 async function load() {
   const params = { limit: 100 }
@@ -69,7 +97,7 @@ async function load() {
 
 async function save() {
   const r = await insertCommand(form.value)
-  if (r.code === 0) { ElMessage.success('命令已创建'); visible.value = false; load() }
+  if (r.code === 0) { ElMessage.success('命令已记录'); visible.value = false; load() }
   else ElMessage.error(r.message)
 }
 
@@ -88,6 +116,11 @@ onMounted(load)
 </script>
 
 <style scoped>
-.toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
-.hint { color: #556677; font-size: 13px; }
+.cmd-code {
+  font-size: 12px;
+  background: var(--bg-card-light);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--color-primary-dark);
+}
 </style>

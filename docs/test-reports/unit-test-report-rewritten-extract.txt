@@ -1,0 +1,342 @@
+paragraphs=174 tables=39
+001: 智慧蘑菇农场项目
+002: 单元测试实训报告
+003: JUnit 5 + Vitest + Hypium
+005: 文档属性
+006: 修订记录
+007: 人工补充项总览
+008: 目录
+009: 摘要
+010: 本报告围绕智慧蘑菇农场项目的单元测试工作展开，覆盖 Web 后端、Web 前端和鸿蒙终端三个层面。报告从测试目标、测试环境、测试策略、测试对象、代表性测试用例、执行结果、覆盖率分析和改进建议等方面进行系统整理。
+011: 当前测试记录显示，Web 后端共 13 个测试类、116 个测试方法，Web 前端共 3 个测试文件、46 个用例，均已执行通过；鸿蒙端已完成 10 个 Hypium 测试文件、约 145 个用例的编写与注册，最终通过截图需在 DevEco Studio 或 hvigorw 环境中补充。报告使用 Mock 隔离数据库、云服务和外部 AI 服务等依赖，重点验证核心业务逻辑和边界处理，形成可重复的质量基线。
+012: 关键词：单元测试；JUnit 5；Vitest；Hypium；JaCoCo；Mock；智慧蘑菇
+013: 1. 引言
+014: 1.1 编写背景
+015: 智慧蘑菇农场项目是东北大学软件学院实训课程中的综合实践系统，包含 Web 管理后台、鸿蒙移动终端和嵌入式采集端等组成部分。系统围绕蘑菇种植场景，实现传感器数据展示、设备管理、命令下发、AI 种植问答、IoT 云平台对接等功能。
+016: 本次实训要求针对项目核心代码编写单元测试，主要使用 JUnit 5 与 Vitest 完成后端与前端测试，并通过断言验证正常、异常和边界三类场景。为体现项目多端协同能力，本报告同时纳入鸿蒙端 Hypium 单元测试的设计与编写情况。
+017: 1.2 文档目的
+018: 说明单元测试的设计思路、执行过程和覆盖范围。
+019: 为实训答辩、成绩评定和后续维护提供可追溯依据。
+020: 帮助团队成员理解核心模块的测试边界、Mock 方式和质量改进方向。
+021: 1.3 读者对象
+022: 本文档面向指导教师、项目开发成员、测试人员以及后续维护人员。
+023: 2. 测试目的与依据
+024: 2.1 测试目的
+025: 验证核心功能正确性：覆盖设备 CRUD、传感器数据查询、命令记录、AI 问答、健康检查等核心接口与业务逻辑。
+026: 掌握单元测试工具链：后端使用 JUnit 5、Mockito、Spring Test 和 JaCoCo；前端使用 Vitest、jsdom 和 coverage-v8；鸿蒙端使用 Hypium。
+027: 建立质量基线：通过自动化测试与覆盖率报告记录当前质量状态，为后续迭代提供回归依据。
+028: 保证多端逻辑一致：通过前后端镜像用例验证 AI 回答清洗等共享规则。
+029: 2.2 依据文档
+030: 2.3 覆盖率目标
+031: 3. 被测系统概述
+032: 3.1 系统架构
+033: 智慧蘑菇系统采用“前后端分离 + 移动端 + 嵌入式端”的分层架构。本次单元测试重点覆盖 Web 前端、Web 后端和鸿蒙端的可独立验证逻辑，嵌入式固件和外部云平台交互不作为本次单元测试主体。
+034: Web 前端：Vue 3 + Element Plus + ECharts，通过 /api/v1 访问后端。
+035: Web 后端：Spring Boot 3.2 + MyBatis-Plus + SQLite，提供 REST API 与 WebSocket。
+036: 鸿蒙终端：ArkTS Stage 模型，通过华为云 IoTDA 应用侧 API 同步设备状态。
+037: 嵌入式端（WS63）：C 语言固件上报温湿度等数据，本报告仅作为系统背景说明。
+039: 图1  智慧蘑菇系统三端架构与单元测试边界
+040: 3.2 测试对象在系统中的位置
+041: 单元测试不启动完整集成环境，不依赖真实数据库、华为云 IoTDA 或 Dify 服务，而是通过 Mock 与纯函数断言隔离外部依赖，聚焦可重复验证的业务逻辑。
+042: HTTP 接口的参数校验、limit 钳制和统一响应格式。
+043: Service 层 CRUD、级联删除、默认值填充和缓存优先策略。
+044: 工具类字符串处理、Token 缓存、图表数值计算。
+045: 前端 API 封装、路由配置与 AI 回答清洗。
+046: 鸿蒙 ViewModel 状态管理和异步状态包装行为。
+047: 4. 测试环境与工具
+048: 4.1 硬件与操作系统
+049: 4.2 软件环境
+050: 4.3 IDE 与辅助工具
+051: IntelliJ IDEA：运行 Java 单元测试并查看 JaCoCo 报告。
+052: VS Code / Cursor：编辑前端测试与文档。
+053: DevEco Studio：运行鸿蒙 Hypium 测试。
+054: Python 3.11 + matplotlib：生成本报告中的结构图与统计图。
+055: 5. 测试策略与方法
+056: 5.1 总体策略
+057: 本项目采用分层单元测试策略。后端按照 Util/DTO/Holder、Service、Controller 分层推进；前端重点覆盖 utils、api 与 router；鸿蒙端覆盖 ViewModel、工具类和模型常量。集成测试、端到端测试和真实云服务链路测试不在本次实训单元测试范围内。
+059: 图2  三端单元测试实施流程
+060: 5.2 Web 后端测试方法
+062: 图3  Web 后端单元测试分层策略
+063: 5.3 Web 前端测试方法
+064: 使用 Vitest 作为测试运行器，jsdom 提供浏览器 DOM 环境。
+065: 对 axios 使用 vi.mock 进行隔离，验证 API 函数调用的 URL、Method 与参数。
+066: 本次不展开 Vue 页面组件测试，Dashboard 等页面对 ECharts / Element Plus 依赖较多，更适合后续使用组件测试或 E2E 测试覆盖。
+067: 5.4 鸿蒙端测试方法
+068: 使用 Hypium 框架，测试文件位于 entry/src/test/*.test.ets。
+069: 通过 List.test.ets 聚合注册全部测试套件。
+070: ViewModel 测试以实例化和公开状态断言为主；IoT 不可用时 loadData() 走 Mock 降级路径。
+071: UI 页面与 Ability 生命周期测试适合放入 ohosTest 或设备测试，本次未展开。
+072: 5.5 用例设计原则
+074: 图4  三端测试用例类型分布（估算）
+075: 6. 测试范围与对象
+076: 6.1 测试规模总览
+078: 图5  三端测试规模统计
+079: 6.2 Web 后端测试对象
+080: 不在本次单元测试范围内的主要内容包括 DataConsumerManager（AMQP 消费）、WebSocketConfig、CorsConfig 等基础设施或集成组件。
+081: 6.3 Web 前端测试对象
+082: 6.4 鸿蒙端测试对象
+084: 图8  鸿蒙端 Hypium 各模块用例数量
+085: 7. 测试用例设计
+086: 7.1 Web 后端代表性用例
+087: 7.1.1 传感器数据 limit 边界（DataController）
+088: 被测逻辑：限制历史查询 limit 范围，确保接口稳定。
+090: 7.1.2 命令列表 limit 边界（CommandController）
+091: 7.1.3 AI 回答清洗（AiAnswerSanitizer）
+092: 测试目标：清除模型思考标签，保留最终答复文本。
+093: 前后端采用一致用例验证该规则。
+094: 7.1.4 设备级联删除（DeviceService）
+095: 7.2 Web 前端代表性用例
+096: 7.2.1 stripThinking 与后端规则对齐
+097: 前端 aiAnswer.test.js 与后端 AiAnswerSanitizerTest 保持一致。
+098: 测试目标：避免重复清洗或漏清洗。
+099: 7.2.2 API 封装完整性
+100: api.test.js 覆盖 20 个导出函数，验证请求方法、路径、参数与响应拦截器行为。例如：
+101: getLatest() -> GET /latest。
+102: aiChat(question) -> POST /ai/chat，body 为 { question }。
+103: 响应拦截器返回 res.data，而不是完整 axios response。
+104: 7.3 鸿蒙端代表性用例
+105: 7.3.1 DeviceViewModel 在线状态同步
+106: 传感器类设备：loadData() 后根据 IotService.isDeviceOnline() 更新 status 与 lastUpdate。
+107: 控制器设备（type=控制器）：跳过 IoT 同步，保持 Mock 状态，用例验证 status 与 lastUpdate 不被误改。
+108: 7.3.2 GrowthViewModel 批次管理
+109: addBatch(GrowthBatch) 使用完整对象参数。
+110: archiveBatch(id) 将 status 置为“已采收”，并触发 updateCounts()。
+111: loadData() 后 harvestedBatches 由 Mock 统计值重算为当前数据的实际统计结果。
+112: 7.3.3 IotTokenManager
+113: setToken(token, expiresInSeconds) 使用两参数签名。
+114: getToken() 在过期前 1 分钟返回 null，保证后续逻辑可以提前刷新 Token。
+115: 8. 测试执行情况
+116: 8.1 执行时间线与命令
+117: 8.2 Web 后端执行结果
+118: 执行结论：Web 后端 116 个测试方法全部通过，无失败、无错误。覆盖率报告路径为 backend/target/site/jacoco/index.html。
+119: 8.3 Web 前端执行结果
+120: 执行结论：Web 前端 46 个用例全部通过。覆盖率报告路径为 frontend/coverage/index.html。
+122: 图7  Web 前端 Vitest 模块覆盖率
+123: 8.4 鸿蒙端执行结果
+124: 鸿蒙端测试代码已编写并在 List.test.ets 中注册。由于 Hypium 命令行运行依赖 DevEco Studio / Hvigor 环境，最终提交前应在本机环境执行一次并补充真实结果截图。
+125: 若本机存在 hvigorw，可在 Smart-Mushroom-HarmonyOS-Terminal-Code 目录下执行 hvigorw test。
+126: 若本机命令行环境未配置完整，建议在 DevEco Studio 中右键 entry/src/test 目录并选择 Run Tests。
+127: 当前测试代码已修正与源码 API 不一致的问题，包括参数个数、字段名和 GrowthBatch 类型等。
+128: 9. 测试结果分析
+129: 9.1 通过/失败统计
+130: 9.2 缺陷发现情况
+131: 单元测试过程中未记录到生产代码功能性缺陷，但测试设计过程暴露并固化了若干质量关注点。
+132: 前后端 AI 清洗逻辑必须保持同步，已通过镜像测试用例验证。
+133: API limit 钳制规则已由 Controller 测试固定，降低超大参数导致性能问题的风险。
+134: 鸿蒙测试需严格与源码 API 对齐，初版测试中出现的参数和字段不一致问题已修正。
+135: 9.3 测试有效性评价
+136: 10. 覆盖率分析
+137: 10.1 Web 后端 JaCoCo 包级覆盖率
+139: 图6  Web 后端 JaCoCo 包级覆盖率
+140: 当前核心业务包覆盖率较高：Controller 包 96%，Service 包 92%，Util 包 100%。
+141: Config、Consumer、WebSocket 等基础设施或集成链路未作为单元测试重点，因此会拉低全项目总覆盖率。
+142: 答辩时应强调本次实训目标为核心业务单元测试，而不是对全部源码文件进行同等覆盖。
+144: 10.2 Web 前端 Vitest 覆盖率
+145: * router funcs 为懒加载 import() 回调，单元测试未触发真实导航；该项不影响对路由配置正确性的验证。
+146: 10.3 鸿蒙端覆盖说明
+147: Hypium 当前未在本环境生成统一覆盖率 HTML，因此采用“测试文件映射 + 模块计数”的方式描述覆盖情况。
+148: ViewModel 层：Dashboard/Alert/Device/Growth 与 BaseViewModel 均有测试文件覆盖。
+149: 工具层：ChartUtils、IotTokenManager、ThemeManager 已建立独立测试文件。
+150: 常量与模型层：SensorType、Recipe 默认数据等已有较完整测试。
+151: 11. 问题与改进建议
+152: 11.1 当前不足
+153: 11.2 后续改进计划
+154: 在 CI（GitHub Actions / GitLab CI）中接入 mvn test 与 npm run test:coverage，形成持续回归。
+155: 优化 JaCoCo includes 配置，单独统计 controller、service、util 等核心包，使指标与实训目标一致。
+156: 鸿蒙端补充 IotService.test.ets，Mock 影子查询 JSON 解析逻辑。
+157: 将真实终端截图与覆盖率截图纳入最终提交材料，增强报告可信度。
+158: 12. 结论
+159: 本次智慧蘑菇项目单元测试实训完成了 Web 后端、Web 前端和鸿蒙端三个层面的测试设计与文档整理。Web 后端 13 个测试类、116 个用例全部通过，核心包 Controller、Service 和 Util 覆盖率较高；Web 前端 3 个测试文件、46 个用例全部通过，utils、api、router 的语句与分支覆盖率达到 100%；鸿蒙端已完成 10 个 Hypium 测试文件、约 145 个用例的编写与注册，提交前需补充真实运行结果。
+160: 整体来看，本次测试有效覆盖了设备管理、传感器数据、命令管理、AI 问答、健康检查等核心业务逻辑，并对 AI 标签清洗、API limit 边界、IoT Token 缓存等关键细节进行验证。通过 Mock 隔离外部依赖，测试具备稳定性和可重复性，为项目后续迭代提供了质量基线。
+161: 附录 A：测试文件清单
+162: A.1 Web 后端
+163: A.2 Web 前端
+164: A.3 鸿蒙端
+165: 附录 B：运行命令与报告路径
+166: 附录 C：截图与提交检查清单
+167: C.1 建议手动补充的真实截图
+168: C.2 最终提交检查清单
+169: □ 封面姓名与学号已填写。
+170: □ 所有“【待补充】”提示均已处理或保留了合理说明。
+171: □ Web 后端、Web 前端和鸿蒙端真实运行截图已插入。
+172: □ 若实际用例数量或覆盖率与报告不同，相关表格和文字已同步修改。
+173: □ 图片清晰、表格未跨页错位，页眉页脚显示正常。
+174: □ 如需提交 PDF，已从最终 DOCX 导出并检查排版。
+
+TABLES
+[TABLE 1] rows=6 cols=2
+课程名称 | 软件学院实训 - 单元测试
+项目名称 | 智慧蘑菇农场系统（Smart Mushroom）
+学院 | 软件学院
+学生姓名 | 【待填写：请填写真实姓名】
+学号 | 【待填写：请填写真实学号】
+编写日期 | 2026 年 7 月
+[TABLE 2] rows=1 cols=1
+【提交前必须处理】 / 请在封面填写本人真实姓名和学号。文中所有“【待补充】”提示均为需要提交前人工确认或替换的内容，已使用醒目底色标注。
+[TABLE 3] rows=8 cols=2
+项目 | 内容
+项目名称 | 智慧蘑菇 Web 终端 + 鸿蒙终端（Smart Mushroom）
+文档类型 | 单元测试实训报告
+版本 | V1.1（重写排版版）
+编写日期 | 2026 年 7 月
+适用课程 | 东北大学软件学院实训 - 单元测试
+[TABLE 4] rows=3 cols=4
+版本 | 日期 | 修订说明 | 作者
+V1.0 | 2026-07-03 | 形成三端单元测试报告初稿 | 【待填写】
+V1.1 | 2026-07-03 | 重写报告语言，统一字体与版式，替换模糊图片，增加人工补充提示 | 【待填写】
+[TABLE 5] rows=1 cols=1
+【待补充项总览】 / 1. 封面姓名、学号需要填写。 / 2. Web 后端与前端建议插入真实终端运行截图和覆盖率 HTML 截图。 / 3. 鸿蒙端需要使用 DevEco Studio 或 hvigorw 在本机运行后，补充真实通过截图和最终通过数量。 / 4. 若项目代码或用例数量后续发生变化，请同步更新第 6、8、9、10 章中的表格数据。
+[TABLE 6] rows=16 cols=2
+序号 | 章节
+1 | 引言
+2 | 测试目的与依据
+3 | 被测系统概述
+4 | 测试环境与工具
+5 | 测试策略与方法
+[TABLE 7] rows=4 cols=2
+依据 | 说明
+《单元测试任务要求.md》 | 实训任务要求、覆盖率说明、提交规范
+项目 README | 系统架构、API 说明、运行方式
+测试分析报告模板 | 报告章节结构参考，已按本项目实际内容裁剪
+[TABLE 8] rows=5 cols=3
+层级 | 目标 | 说明
+Web 核心 Controller / Service | 尽量接近 100% | 实训要求核心功能重点覆盖
+Web 工具类 | ≥ 80% | 如 AiAnswerSanitizer 等纯逻辑类
+Web 前端 utils / api / router | ≥ 80% | 业务逻辑集中模块
+鸿蒙 ViewModel / 工具类 | 核心方法全覆盖 | 作为实训扩展项，使用 Hypium 本地单测
+[TABLE 9] rows=4 cols=2
+项目 | 配置
+操作系统 | Windows 10 / Windows 11
+处理器 | x64 开发机
+内存 | 8 GB 及以上（建议）
+[TABLE 10] rows=7 cols=4
+端 | 语言/运行时 | 框架/版本 | 测试工具
+Web 后端 | Java 17 | Spring Boot 3.2.5 | JUnit 5、Mockito、spring-boot-starter-test
+Web 后端覆盖率 | - | JaCoCo 0.8.11 | mvn test 后生成 HTML 报告
+Web 前端 | Node.js | Vue 3.5、Vite 6 | Vitest 2.x、jsdom
+Web 前端覆盖率 | - | @vitest/coverage-v8 | npm run test:coverage
+鸿蒙端 | ArkTS | API 6.1.1 | Hypium 1.0.25、@ohos/hamock
+[TABLE 11] rows=4 cols=3
+层次 | 技术 | 隔离手段
+Util / DTO / Holder | 纯 JUnit 5 | 无需 Spring 容器，直接断言
+Service | JUnit 5 + Mockito | Mock MyBatis Mapper
+Controller | @WebMvcTest + MockMvc | Mock Service 依赖，模拟 HTTP 请求
+[TABLE 12] rows=4 cols=3
+类型 | 定义 | 示例
+正常场景 | 合法输入，预期成功 | 创建设备返回 code=0；stripThinking 正确剥离思考标签
+异常场景 | 非法输入或依赖失败 | 空问题返回 400；AI 服务异常返回 code=-1
+边界场景 | 极值、空值或临界条件 | history limit=0 钳制为 1；Token 临近过期返回 null
+[TABLE 13] rows=5 cols=4
+端 | 测试文件/类数 | 用例数 | 说明
+Web 后端 | 13 | 116 | JUnit 5 / Mockito / MockMvc
+Web 前端 | 3 | 46 | Vitest + jsdom
+鸿蒙端 | 10 | 约 145 | Hypium，本地需补充执行截图
+合计 | 26 | 307+ | 自动化断言场景
+[TABLE 14] rows=14 cols=4
+测试类 | 被测类 | 用例数 | 测试重点
+AiAnswerSanitizerTest | AiAnswerSanitizer | 16 | think/thinking/redacted_thinking 标签剥离、孤立标签、换行压缩
+ApiResponseTest | ApiResponse | 6 | ok/fail 工厂方法，code/message/total 字段
+LatestDataHolderTest | LatestDataHolder | 4 | 线程安全缓存读写、覆盖更新
+DeviceServiceTest | DeviceService | 13 | 创建默认值、级联删除、markOnline
+SensorDataServiceTest | SensorDataService | 19 | insert 默认值、history 条件、deleteBatch
+[TABLE 15] rows=4 cols=4
+测试文件 | 被测模块 | 用例数 | 测试重点
+aiAnswer.test.js | utils/aiAnswer.js | 17 | 与后端 AiAnswerSanitizerTest 用例对齐
+api.test.js | api/index.js | 20 | baseURL、拦截器、20 个 REST 函数 URL/Method
+router.test.js | router/index.js | 9 | 6 条路由、redirect、meta.title、懒加载配置
+[TABLE 16] rows=11 cols=4
+测试文件 | 被测模块 | 约用例数 | 说明
+ViewModel.test.ets | DashboardViewModel、AlertViewModel | 约 40 | 传感器 Mock、loadData 降级
+IotTypes.test.ets | SensorType、StyleConstants、AdaptiveUtils | 约 35 | 枚举与常量
+Recipe.test.ets | RecipeModel 默认数据 | 约 19 | 配方阶段与参数
+DeviceViewModel.test.ets | DeviceViewModel | 约 7 | 设备统计、loadData、控制器不受影响
+GrowthViewModel.test.ets | GrowthViewModel | 约 11 | addBatch、archiveBatch、updateCounts
+[TABLE 17] rows=1 cols=1
+int safeLimit = Math.min(Math.max(limit, 1), 1000);
+[TABLE 18] rows=6 cols=4
+用例 ID | 场景类型 | 输入 | 预期结果
+DC-H-01 | 正常 | limit=100 | 调用 service.queryHistory(100, ...)
+DC-H-02 | 边界 | limit=0 | 钳制为 1
+DC-H-03 | 边界 | limit=9999 | 钳制为 1000
+DC-L-01 | 正常 | 存在 LatestDataHolder 缓存 | 直接返回缓存，不查库
+DC-L-02 | 异常回退 | 无缓存 | 调用 sensorDataService.queryLatestOne
+[TABLE 19] rows=1 cols=1
+int safeLimit = Math.min(Math.max(limit, 1), 200);
+[TABLE 20] rows=3 cols=4
+用例 ID | 场景类型 | 输入 | 预期结果
+CC-L-01 | 边界 | limit=0 | 钳制为 1
+CC-L-02 | 边界 | limit=9999 | 钳制为 200
+[TABLE 21] rows=5 cols=4
+用例 ID | 场景 | 输入摘要 | 预期结果
+AS-01 | 正常 | 含完整 think 块 | 仅保留正文
+AS-02 | 边界 | null / 空白 | 返回空字符串
+AS-03 | 边界 | 仅存在孤立开标签 | 清除标签后保留正文
+AS-04 | 边界 | 存在连续多个换行 | 压缩为双换行
+[TABLE 22] rows=3 cols=3
+用例 ID | 场景 | 验证点
+DS-D-01 | 正常删除 | 先删除 sensorData 和 command，再删除 device
+DS-D-02 | 设备不存在 | 级联删除逻辑仍执行，最终返回 false
+[TABLE 23] rows=4 cols=4
+阶段 | 端 | 命令 | 执行目录
+后端单测 | Web | mvn test | Smart-Mushroom-Web-Terminal-Code/backend
+前端单测 | Web | npm run test:coverage | Smart-Mushroom-Web-Terminal-Code/frontend
+鸿蒙单测 | 鸿蒙 | hvigorw test 或 DevEco Studio -> Run Tests | Smart-Mushroom-HarmonyOS-Terminal-Code
+[TABLE 24] rows=1 cols=1
+[INFO] Tests run: 116, Failures: 0, Errors: 0, Skipped: 0 / [INFO] BUILD SUCCESS
+[TABLE 25] rows=1 cols=1
+【待补充截图 S1/S2/S3】 / 建议在此处插入三张真实截图： / S1：mvn test 最后一屏 BUILD SUCCESS。 / S2：浏览器打开 JaCoCo 首页包列表。 / S3：JaCoCo Controller/Service 类详情页。
+[TABLE 26] rows=1 cols=1
+Test Files 3 passed (3) / Tests 46 passed (46)
+[TABLE 27] rows=1 cols=1
+【待补充截图 S4/S5】 / 建议在此处插入两张真实截图： / S4：Vitest 终端输出 46 passed。 / S5：coverage/index.html 覆盖率总览页面。
+[TABLE 28] rows=1 cols=1
+【待补充截图 S7/S8】 / 请补充鸿蒙端真实执行证据： / S7：hvigorw test 输出通过截图。 / S8：DevEco Studio 测试树全部绿色通过截图。 / 若最终通过数量与本报告“约 145”不一致，请同步更新第 6、9 章表格。
+[TABLE 29] rows=5 cols=6
+端 | 测试文件/类 | 用例总数 | 通过 | 失败 | 通过率
+Web 后端 | 13 | 116 | 116 | 0 | 100%
+Web 前端 | 3 | 46 | 46 | 0 | 100%
+鸿蒙端 | 10 | 约 145 | 【待补充】 | 【待补充】 | 【待补充】
+合计 | 26 | 307+ | 162+ 已确认 | 0 已确认 | 已执行部分 100%
+[TABLE 30] rows=6 cols=2
+评价维度 | 结论
+核心 API 覆盖 | 5 个 Controller 均设置独立测试类
+业务规则覆盖 | 级联删除、默认值、缓存优先、limit 钳制均有用例
+异常路径覆盖 | AI 校验、404 fail、外部服务异常均有覆盖
+可维护性 | 测试名称具有语义，便于答辩讲解和后续维护
+运行速度 | 后端和前端测试运行耗时较短，适合后续接入 CI
+[TABLE 31] rows=7 cols=4
+包 | 指令覆盖率 | 是否达标 | 说明
+com.smartmushroom.controller | 96% | 接近达标 | 5 个 Controller 均已测试
+com.smartmushroom.service | 92% | 接近达标 | 5 个 Service 均已测试
+com.smartmushroom.util | 100% | 达标 | AiAnswerSanitizer 已覆盖
+com.smartmushroom.dto | 21% | 部分覆盖 | ApiResponse 工厂方法已测，Lombok 生成方法计入分母
+com.smartmushroom.config | 1% | 未作为重点 | 配置类，非核心业务
+[TABLE 32] rows=4 cols=5
+文件 | Stmts | Branch | Funcs | Lines
+api/index.js | 100% | 100% | 100% | 100%
+utils/aiAnswer.js | 100% | 100% | 100% | 100%
+router/index.js | 100% | 100% | 0%* | 100%
+[TABLE 33] rows=6 cols=4
+编号 | 问题 | 影响 | 建议
+P1 | 全项目 JaCoCo 总覆盖率低于核心包覆盖率 | 答辩时易被误解 | 报告中明确区分核心业务覆盖率与全仓库覆盖率
+P2 | AMQP/WebSocket 未做单元测试 | 集成链路缺少自动化验证 | 后续增加 @SpringBootTest 或 Testcontainers 测试
+P3 | 鸿蒙 IotService 网络层未充分 Mock | 网络层逻辑覆盖不足 | 使用 @ohos/hamock Mock HTTP 响应
+P4 | Vue 页面组件未测试 | UI 回归主要依赖人工检查 | 后续引入 Vue Test Utils 或 Playwright
+P5 | 嵌入式 C 端未纳入测试 | 全栈测试仍有缺口 | 后续使用 Unity/CMock 抽离 MQTT 解析函数测试
+[TABLE 34] rows=1 cols=1
+【最终提交建议】 / 提交前请完成封面信息、真实截图、鸿蒙端执行结果三类内容补充；若课程平台要求 PDF，请在 Word 中检查分页和图片清晰度后再导出 PDF。
+[TABLE 35] rows=1 cols=1
+backend/src/test/java/com/smartmushroom/ / ├── util/AiAnswerSanitizerTest.java / ├── dto/ApiResponseTest.java / ├── service/ / │   ├── LatestDataHolderTest.java / │   ├── DeviceServiceTest.java / │   ├── SensorDataServiceTest.java / │   ├── CommandServiceTest.java / │   ├── StatisticsServiceTest.java / │   └── AiServiceTest.java / ├── controller/ / │   ├── DataControllerTest.java / │   ├── CommandControllerTest.java / │   ├── DeviceControllerTest.java / │   ├── AiControllerTest.java / │   └── HealthControllerTest.java / └── test/MybatisPlusTestSupport.java
+[TABLE 36] rows=1 cols=1
+frontend/src/ / ├── utils/__tests__/aiAnswer.test.js / ├── api/__tests__/api.test.js / └── router/__tests__/router.test.js
+[TABLE 37] rows=1 cols=1
+entry/src/test/ / ├── List.test.ets / ├── LocalUnit.test.ets / ├── ViewModel.test.ets / ├── IotTypes.test.ets / ├── Recipe.test.ets / ├── DeviceViewModel.test.ets / ├── GrowthViewModel.test.ets / ├── ChartUtils.test.ets / ├── IotTokenManager.test.ets / ├── ThemeManager.test.ets / └── BaseViewModel.test.ets
+[TABLE 38] rows=1 cols=1
+# Web 后端测试 + JaCoCo / cd Smart-Mushroom-Web-Terminal-Code/backend / mvn clean test / # 报告路径：target/site/jacoco/index.html /  / # Web 前端测试 + 覆盖率 / cd Smart-Mushroom-Web-Terminal-Code/frontend / npm run test:coverage / # 报告路径：coverage/index.html /  / # 鸿蒙 Hypium（需 DevEco / Hvigor 环境） / cd Smart-Mushroom-HarmonyOS-Terminal-Code / hvigorw test /  / # 重新生成本报告插图 / python docs/test-reports/generate_figures.py
+[TABLE 39] rows=8 cols=3
+编号 | 文件名建议 | 内容
+S1 | backend-mvn-test-pass.png | mvn test BUILD SUCCESS
+S2 | jacoco-overview.png | JaCoCo 首页
+S3 | jacoco-core-classes.png | Controller / Service 类详情
+S4 | frontend-vitest-pass.png | Vitest 46 passed
+S5 | vitest-coverage-overview.png | coverage/index.html 总览

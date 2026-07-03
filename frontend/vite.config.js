@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
@@ -14,6 +14,13 @@ export default defineConfig({
         target: 'ws://localhost:8080',
         ws: true,
       },
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      include: ['src/utils/**', 'src/api/**', 'src/router/**'],
     },
   },
 })

@@ -1,7 +1,7 @@
 package com.smartmushroom.service;
 
 import com.smartmushroom.config.AppProperties;
-import com.smartmushroom.entity.SensorData;
+import com.smartmushroom.util.AiAnswerSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -36,9 +36,11 @@ public class AiService {
         Map<String, Object> response = restTemplate.postForObject(
                 appProperties.getDify().getApiUrl(), entity, Map.class);
 
+        String answer = AiAnswerSanitizer.sanitize(
+                response != null ? response.get("answer") : null);
+
         Map<String, Object> result = new HashMap<>();
-        result.put("answer", response != null ? response.getOrDefault("answer", "") : "");
-        result.put("raw", response);
+        result.put("answer", answer);
         return result;
     }
 }

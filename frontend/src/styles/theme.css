@@ -1,0 +1,119 @@
+/* 智慧蘑菇农场 — 毛玻璃主题（对齐鸿蒙端 frosted） */
+:root {
+  --bg-page: #f2f5f9;
+  --bg-card: #ffffff;
+  --bg-card-light: #f0f4f2;
+  --bg-header: linear-gradient(150deg, #2c3e50 0%, #1a252f 100%);
+
+  --color-primary: #7ec8a3;
+  --color-primary-light: #b5e3cc;
+  --color-primary-dark: #5daf8a;
+  --color-accent: #a8c8f0;
+
+  --color-success: #b5e0c3;
+  --color-success-text: #3d8b62;
+  --color-warning: #f5e0b0;
+  --color-warning-text: #b8860b;
+  --color-danger: #f0b8b8;
+  --color-danger-text: #c45656;
+
+  --text-title: #1a2a35;
+  --text-body: #324550;
+  --text-sub: #546e7a;
+  --text-hint: #7e929f;
+  --text-white: #ffffff;
+  --text-white-sub: #b0bec5;
+
+  --border: #d5dbe0;
+  --border-light: #dce1e5;
+  --shadow-card: 0 4px 12px rgba(200, 212, 205, 0.55);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --sensor-temp: #f2b8b0;
+  --sensor-humi: #a8d0f0;
+  --sensor-co2: #c0b8e8;
+  --sensor-lumi: #f0e0b0;
+  --sensor-smoke: #d8c0e0;
+
+  --el-color-primary: #7ec8a3;
+  --el-color-primary-light-3: #a8d9be;
+  --el-color-primary-light-5: #c2e6d2;
+  --el-color-primary-light-7: #dbf2e6;
+  --el-color-primary-light-9: #f0faf4;
+  --el-color-primary-dark-2: #5daf8a;
+  --el-border-radius-base: 10px;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f2f5f9;
+  --el-text-color-primary: #1a2a35;
+  --el-text-color-regular: #324550;
+  --el-text-color-secondary: #546e7a;
+  --el-border-color: #d5dbe0;
+  --el-border-color-light: #e8ecef;
+  --el-fill-color-blank: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  min-height: 100vh;
+}
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  background: var(--bg-page);
+  color: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.page-toolbar .hint {
+  color: var(--text-hint);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title);
+  margin-bottom: 4px;
+}
+
+.page-title-desc {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-bottom: 16px;
+}
+
+.data-table-card :deep(.el-table) {
+  --el-table-bg-color: #ffffff;
+  --el-table-tr-bg-color: #ffffff;
+  --el-table-header-bg-color: #f0f4f2;
+  --el-table-text-color: var(--text-body);
+  --el-table-header-text-color: var(--text-sub);
+  --el-table-row-hover-bg-color: #f5f9f7;
+  --el-table-border-color: var(--border-light);
+}
+
+.data-table-card :deep(.el-table th.el-table__cell) {
+  font-weight: 500;
+}
+
+.el-dialog {
+  border-radius: var(--radius-lg) !important;
+}

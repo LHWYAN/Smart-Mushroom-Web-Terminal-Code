@@ -1,34 +1,39 @@
 <template>
-  <el-container class="layout">
-    <el-header class="header">
-      <div class="header-left">
-        <h1>智慧蘑菇农场 · IoT 监控系统</h1>
-        <p>Spring Boot + Vue 3 前后端分离 · 3表架构 · 完整 CRUD</p>
+  <div class="app-shell">
+    <!-- 顶部导航 -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <span class="brand-icon">🍄</span>
+        <div>
+          <div class="brand-name">智慧蘑菇农场</div>
+          <div class="brand-sub">Web 监控终端</div>
+        </div>
       </div>
-      <div class="header-right">
-        <el-tag type="success" effect="dark" size="small">运行中</el-tag>
-        <span>数据 <strong>{{ stats.total_records || 0 }}</strong> 条</span>
-        <span>设备 <strong>{{ stats.total_devices || 0 }}</strong> 台</span>
-        <span class="time">{{ updateTime }}</span>
+
+      <nav class="nav-tabs">
+        <router-link
+          v-for="tab in tabs"
+          :key="tab.path"
+          :to="tab.path"
+          class="nav-tab"
+          :class="{ active: route.path === tab.path }"
+        >
+          <span class="tab-icon">{{ tab.icon }}</span>
+          <span>{{ tab.label }}</span>
+        </router-link>
+      </nav>
+
+      <div class="nav-stats">
+        <span class="stat-item">数据 <em>{{ stats.total_records || 0 }}</em></span>
+        <span class="stat-item">设备 <em>{{ stats.total_devices || 0 }}</em></span>
+        <span v-if="updateTime" class="stat-time">{{ updateTime }}</span>
       </div>
-    </el-header>
+    </header>
 
-    <el-container>
-      <el-aside width="200px" class="aside">
-        <el-menu :default-active="route.path" router background-color="#0d1b2a" text-color="#8899aa" active-text-color="#00d4ff">
-          <el-menu-item index="/dashboard"><el-icon><Odometer /></el-icon><span>仪表盘</span></el-menu-item>
-          <el-menu-item index="/devices"><el-icon><Monitor /></el-icon><span>设备管理</span></el-menu-item>
-          <el-menu-item index="/data"><el-icon><DataLine /></el-icon><span>数据管理</span></el-menu-item>
-          <el-menu-item index="/commands"><el-icon><List /></el-icon><span>命令管理</span></el-menu-item>
-          <el-menu-item index="/ai"><el-icon><ChatDotRound /></el-icon><span>AI 助手</span></el-menu-item>
-        </el-menu>
-      </el-aside>
-
-      <el-main class="main">
-        <router-view />
-      </el-main>
-    </el-container>
-  </el-container>
+    <main class="main-content">
+      <router-view />
+    </main>
+  </div>
 </template>
 
 <script setup>
@@ -41,12 +46,22 @@ const stats = ref({})
 const updateTime = ref('')
 let timer = null
 
+const tabs = [
+  { path: '/dashboard', label: '首页', icon: '🏠' },
+  { path: '/devices', label: '设备', icon: '📱' },
+  { path: '/data', label: '数据', icon: '📊' },
+  { path: '/commands', label: '命令', icon: '📋' },
+  { path: '/ai', label: '问答', icon: '💬' },
+]
+
 async function refreshHeader() {
   try {
     const s = await getStatistics()
     if (s.code === 0) stats.value = s.data || {}
     const l = await getLatest()
-    if (l.code === 0 && l.data?.create_time) updateTime.value = '更新: ' + l.data.create_time
+    if (l.code === 0 && l.data?.create_time) {
+      updateTime.value = l.data.create_time.split(' ')[1] || l.data.create_time
+    }
   } catch (_) {}
 }
 
@@ -57,21 +72,124 @@ onMounted(() => {
 onUnmounted(() => clearInterval(timer))
 </script>
 
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0f1923; color: #e0e0e0; font-family: "Microsoft YaHei", sans-serif; }
-.layout { min-height: 100vh; }
-.header {
-  background: linear-gradient(135deg, #1a2a3a, #0d1b2a);
-  border-bottom: 2px solid #1e90ff33;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 24px; height: 64px !important;
+<style scoped>
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg-page);
 }
-.header-left h1 { font-size: 18px; color: #00d4ff; }
-.header-left p { font-size: 12px; color: #8899aa; margin-top: 4px; }
-.header-right { display: flex; gap: 16px; align-items: center; font-size: 13px; color: #8899aa; }
-.header-right strong { color: #00d4ff; }
-.header-right .time { color: #556677; font-size: 12px; }
-.aside { background: #0d1b2a; border-right: 1px solid #1a2d42; }
-.main { background: #0f1923; padding: 16px; }
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 24px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(200, 212, 205, 0.25);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.brand-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-title);
+  line-height: 1.2;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-hint);
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 14px;
+  color: var(--text-sub);
+  transition: all 0.2s;
+}
+
+.nav-tab:hover {
+  background: var(--bg-card-light);
+  color: var(--text-title);
+}
+
+.nav-tab.active {
+  background: var(--el-color-primary-light-9);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.nav-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-sub);
+  flex-shrink: 0;
+}
+
+.nav-stats em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.stat-time {
+  font-size: 12px;
+  color: var(--text-hint);
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px 32px;
+}
+
+@media (max-width: 900px) {
+  .top-nav {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .nav-tabs {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .nav-stats {
+    display: none;
+  }
+}
 </style>
